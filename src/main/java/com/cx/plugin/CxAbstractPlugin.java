@@ -4,6 +4,7 @@ import com.checkmarx.v7.CxWSReportType;
 import com.checkmarx.v7.ScanDisplayData;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -33,7 +34,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     @Parameter(required = true)
     protected URL url;
 
-    @Parameter(defaultValue = "${projectName}")//todo default value?
+    @Parameter(defaultValue = "${project.name}")
     protected String projectName;
 
     @Parameter
@@ -42,7 +43,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     @Parameter
     protected String preset;
 
-    @Parameter
+    @Parameter(defaultValue = "true")
     protected boolean isIncrementalScan;
 
     @Parameter
@@ -51,10 +52,10 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     @Parameter
     protected String fileExclusions;
 
-    @Parameter//todo implement
+    @Parameter(defaultValue = "true")
     protected boolean isSynchronous;
 
-    @Parameter//todo choose name
+    @Parameter(defaultValue = "true")
     protected boolean generatePDFReport;
 
     @Parameter(defaultValue = "-1")//todo what default values should threshold have? maybe it is required field?
@@ -65,6 +66,9 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
     @Parameter(defaultValue = "-1")
     protected int lowSeveritiesThreshHold;
+
+    @Parameter(defaultValue = "-1")
+    protected int scanTimeoutInMinuets;
 
     @Parameter(defaultValue = "${project.build.directory}\\checkmarx")
     protected File outputDirectory;
@@ -83,15 +87,19 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     protected ZipArchiver zipArchiver;
 
     public static final String SOURCES_ZIP_NAME = "sources";
-    public static final String PDF_REPORT_NAME = "report";
+    public static final String PDF_REPORT_NAME = "CxReport";
+
+    public static final String HTML_TEMPLATE_LOCATION = "com/cx/plugin/htmlReportTemplate.html";
 
     protected CxClient cxClient;
 
-    private Log log = getLog();
+    String scanResultsUrl;
+
+    private Log log;
 
 
-    //todo scan timeout, what about "generate report" timeout? what about logging?
     public void execute() throws MojoExecutionException, MojoFailureException {
+        log = getLog();
 
         if(shouldSkip()) {
             log.info("project has no sources (reactor), skipping");
@@ -100,16 +108,14 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
         //initialize cx client
         log.debug("initializing cx client");
-        cxClient = new CxClient(username, password, url, getLog());
-
-        //
+        cxClient = new CxClient(username, password, url, scanTimeoutInMinuets, getLog());
 
         //perform login to server
-        getLog().info("logging in to checkmarx service at: " +url);
+        log.info("logging in to checkmarx service at: " +url);
         cxClient.loginToServer();
 
         //prepare sources to scan (zip them)
-        getLog().info("zipping sources");
+        log.info("zipping sources");
         zipSources();
 
         //send sources to scan
@@ -119,11 +125,12 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         cxClient.createProject(conf);
         log.info("project created successfully");
 
-        if(isSynchronous) {
+        if(!isSynchronous) {
             log.info("not waiting for scan to finnish");
             return;
         }
         //wait for scan to finnish
+        log.info("waiting for scan to finnish");
         cxClient.waitForScanToFinnish();
 
         //create scan report
@@ -134,10 +141,40 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
         //get scan results
         ScanDisplayData scanResults = cxClient.getScanResults();
+        scanResultsUrl = String.format( url + "/CxWebClient/ViewerMain.aspx?scanId=%s&ProjectID=%s", scanResults.getScanID(), scanResults.getProjectId());
+
+        printResultsToConsole(scanResults);
+
+        log.info("generating html report");
+        generateHTMLReport(scanResults);
 
         //assert vulnerabilities under threshold
         assertVulnerabilities(scanResults);
 
+    }
+
+    private void printResultsToConsole(ScanDisplayData scanResults) {
+        log.info("high severity: " +scanResults.getHighSeverityResults());
+        log.info("high severity: " +scanResults.getHighSeverityResults());
+        log.info("medium severity: " +scanResults.getMediumSeverityResults());
+        log.info("low severity: " +scanResults.getLowSeverityResults());
+        log.info("scan results can be found at: " + scanResultsUrl);
+
+    }
+
+    protected void generateHTMLReport(ScanDisplayData scanResults){
+
+        File htmlReportFile = new File(outputDirectory + "\\report.html");
+        ClassLoader classLoader = getClass().getClassLoader();
+
+        try {
+
+            String htmlTemplate = IOUtils.toString(classLoader.getResourceAsStream(HTML_TEMPLATE_LOCATION));
+            FileUtils.writeStringToFile(htmlReportFile, String.format(htmlTemplate, scanResults.getHighSeverityResults(), scanResults.getMediumSeverityResults(), scanResults.getLowSeverityResults(), scanResultsUrl));
+        } catch (IOException e) {
+            log.warn("fail to generate html report");
+            log.debug("fail to generate html report: ", e);
+        }
 
     }
 
@@ -167,7 +204,6 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         if(lowSeveritiesThreshHold > 0 && scanResults.getLowSeverityResults() > lowSeveritiesThreshHold) {
             throw new MojoFailureException("low severity results is above threshold: " +scanResults.getLowSeverityResults());
         }
-
     }
 
     protected byte[] getBytesFromZippedSources() throws MojoExecutionException {
@@ -193,11 +229,15 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     protected void createScanReport() throws MojoExecutionException {
         byte[] scanReport = cxClient.getScanReport(CxWSReportType.PDF);
 
-        try {
-            FileUtils.writeByteArrayToFile(new File( outputDirectory, PDF_REPORT_NAME + ".pdf"), scanReport);
-        } catch (IOException e) {
-            throw new MojoExecutionException("fail to create report", e);
+        if(scanReport != null) {
+            try {
+                FileUtils.writeByteArrayToFile(new File( outputDirectory, PDF_REPORT_NAME + ".pdf"), scanReport);
+            } catch (IOException e) {
+                log.warn("fail to create report");
+                log.debug("fail to create report: ", e);
+            }
         }
+
 
     }
 
@@ -218,12 +258,24 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
             String prefix = subProject.getName() + "\\";
 
+            //add sources
             List compileSourceRoots = subProject.getCompileSourceRoots();
             for (Object c : compileSourceRoots) {
 
                 File sourceDir = new File((String)c);
                 if(sourceDir.exists()) {
                     zipArchiver.addDirectory(sourceDir, prefix);
+                }
+            }
+
+            //add resources
+            List reSourceRoots = subProject.getResources();
+            for (Object c : reSourceRoots) {
+
+                Resource resource = (Resource)c;
+                File resourceDir = new File(resource.getDirectory());
+                if(resourceDir.exists()) {
+                    zipArchiver.addDirectory(resourceDir, prefix);
                 }
             }
         }
