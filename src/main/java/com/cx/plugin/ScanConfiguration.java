@@ -1,7 +1,5 @@
 package com.cx.plugin;
 
-import org.apache.maven.plugins.annotations.Parameter;
-
 /**
  * Created by: Dorg.
  * Date: 22/08/2016.

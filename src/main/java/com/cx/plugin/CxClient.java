@@ -21,8 +21,8 @@ public class CxClient {
     private Credentials credentials;
     private CxWSResponseRunID scanResponse;
     private ScanDisplayData scanDisplayData;
-    private int scanTimeoutInMin =  -1;
-    private int generateReportTimeLimitInSec =  60;
+    private int scanTimeoutInMin = -1;
+    private int generateReportTimeLimitInSec = 60;
 
 
     private static final QName SERVICE_NAME = new QName("http://Checkmarx.com/v7", "CxSDKWebService");
@@ -48,7 +48,7 @@ public class CxClient {
         CxWSResponseLoginData res = client.login(credentials, 1099);
         sessionId = res.getSessionId();
 
-        if(sessionId == null) {
+        if (sessionId == null) {
             throw new MojoExecutionException("fail to perform login: " + res.getErrorMessage());
         }
     }
@@ -61,19 +61,19 @@ public class CxClient {
 
         ProjectSettings prjSettings = new ProjectSettings();
         prjSettings.setProjectName(conf.getProjectName());
-        if(conf.getPreset() != null){
+        if (conf.getPreset() != null) {
             long presetIdFromName = getPresetIdFromName(conf.getPreset());
-            if(presetIdFromName == 0) {
-                log.warn("preset ["+conf.getPreset()+"] not found. scanning with default preset");
+            if (presetIdFromName == 0) {
+                log.warn("preset [" + conf.getPreset() + "] not found. scanning with default preset");
             }
             prjSettings.setPresetID(presetIdFromName);
         }
 
         String associatedGroupId = null;
-        if(conf.getFullTeamPath() != null) {
+        if (conf.getFullTeamPath() != null) {
             associatedGroupId = getGroupIdFromTeamPath(conf.getFullTeamPath());
-            if(associatedGroupId == null) {
-                log.warn("Team Path ["+conf.getFullTeamPath()+"] not found");
+            if (associatedGroupId == null) {
+                log.warn("Team Path [" + conf.getFullTeamPath() + "] not found");
             }
         }
         prjSettings.setAssociatedGroupID(associatedGroupId);
@@ -82,14 +82,14 @@ public class CxClient {
         SourceCodeSettings srcCodeSettings = new SourceCodeSettings();
         srcCodeSettings.setSourceOrigin(SourceLocationType.LOCAL);
         LocalCodeContainer packageCode = new LocalCodeContainer();
-        packageCode.setFileName(prjSettings.getProjectName()+ "_" + System.currentTimeMillis());
+        packageCode.setFileName(prjSettings.getProjectName() + "_" + System.currentTimeMillis());
         packageCode.setZippedFile(conf.getZippedSources());
 
         srcCodeSettings.setPackagedCode(packageCode);
         cliScanArgs.setSrcCodeSettings(srcCodeSettings);
 
         //todo problem with that
-        if(conf.getFolderExclusions() != null || conf.getFileExclusions() != null) {
+        if (conf.getFolderExclusions() != null || conf.getFileExclusions() != null) {
             SourceFilterPatterns filter = new SourceFilterPatterns();
             filter.setExcludeFilesPatterns(conf.getFileExclusions());
             filter.setExcludeFoldersPatterns(conf.getFolderExclusions());
@@ -98,7 +98,7 @@ public class CxClient {
 
         log.info("sending scan request");
         scanResponse = client.scan(sessionId, cliScanArgs);
-        if(!scanResponse.isIsSuccesfull()) {
+        if (!scanResponse.isIsSuccesfull()) {
             throw new MojoExecutionException("fail to perform scan: " + scanResponse.getErrorMessage());
         }
 
@@ -108,14 +108,14 @@ public class CxClient {
     private String getGroupIdFromTeamPath(String fullTeamPath) throws MojoExecutionException {
 
         CxWSResponseGroupList associatedGroupsList = client.getAssociatedGroupsList(sessionId);
-        if(!associatedGroupsList.isIsSuccesfull()) {
+        if (!associatedGroupsList.isIsSuccesfull()) {
             return null;
         }
 
         List<Group> group = associatedGroupsList.getGroupList().getGroup();
 
-        for (Group g: group) {
-            if(fullTeamPath.equals(g.getGroupName())){
+        for (Group g : group) {
+            if (fullTeamPath.equals(g.getGroupName())) {
                 return g.getID();
             }
 
@@ -127,14 +127,14 @@ public class CxClient {
     private long getPresetIdFromName(String presetName) throws MojoExecutionException {
 
         CxWSResponsePresetList presetList = client.getPresetList(sessionId);
-        if(!presetList.isIsSuccesfull()) {
+        if (!presetList.isIsSuccesfull()) {
             return 0;
         }
 
         List<Preset> preset = presetList.getPresetList().getPreset();
 
         for (Preset p : preset) {
-            if(presetName.equals(p.getPresetName())){//presetName.equalsIgnoreCase(p.getPresetName(); todo ignore case?
+            if (presetName.equals(p.getPresetName())) {//presetName.equalsIgnoreCase(p.getPresetName(); todo ignore case?
                 return p.getID();
             }
         }
@@ -162,32 +162,32 @@ public class CxClient {
 
             CxWSResponseScanStatus scanStatus = client.getStatusOfSingleScan(sessionId, runId);
 
-            if(!scanStatus.isIsSuccesfull()) {
+            if (!scanStatus.isIsSuccesfull()) {
                 throw new MojoExecutionException("fail to get status from scan: " + scanStatus.getErrorMessage());
             }
 
             currentStatus = scanStatus.getCurrentStatus();
 
-            if(CurrentStatusEnum.FAILED.equals(currentStatus) ||
+            if (CurrentStatusEnum.FAILED.equals(currentStatus) ||
                     CurrentStatusEnum.CANCELED.equals(currentStatus) ||
                     CurrentStatusEnum.DELETED.equals(currentStatus) ||
                     CurrentStatusEnum.UNKNOWN.equals(currentStatus)) {
 
-                throw new MojoExecutionException("scan cannot be completed. status ["+currentStatus.value()+"]");
+                throw new MojoExecutionException("scan cannot be completed. status [" + currentStatus.value() + "]");
             }
 
-            if(CurrentStatusEnum.FINISHED.equals(currentStatus)) {
+            if (CurrentStatusEnum.FINISHED.equals(currentStatus)) {
                 scanDisplayData = getScanDisplayData();
                 return;
             }
 
-            log.info("waiting for scan to finnish. " + ((System.currentTimeMillis() / 60000) - startTime) + " minuets elapsed" );
+            log.info("waiting for scan to finnish. " + ((System.currentTimeMillis() / 60000) - startTime) + " minuets elapsed");
 
         }
 
-        if(!CurrentStatusEnum.FINISHED.equals(currentStatus)) {
-            String status =  currentStatus == null ? CurrentStatusEnum.UNKNOWN.value() : currentStatus.value();
-            throw new MojoExecutionException("scan has reached the time limit. status: ["+ status +"]");
+        if (!CurrentStatusEnum.FINISHED.equals(currentStatus)) {
+            String status = currentStatus == null ? CurrentStatusEnum.UNKNOWN.value() : currentStatus.value();
+            throw new MojoExecutionException("scan has reached the time limit. status: [" + status + "]");
         }
 
         log.info("retrieving scan results");
@@ -199,20 +199,20 @@ public class CxClient {
         CxWSCreateReportResponse createScanReportResponse = client.createScanReport(
                 sessionId, ClientDataGen.genReportRequest(scanDisplayData.getScanID(), reportType));
 
-        if(!createScanReportResponse.isIsSuccesfull()) {
+        if (!createScanReportResponse.isIsSuccesfull()) {
             log.warn("fail to create scan report");
             log.debug("fail to create scan report: " + createScanReportResponse.getErrorMessage());
             return null;
         }
 
         long reportId = createScanReportResponse.getID();
-        if(!waitForReport(reportId)) {
+        if (!waitForReport(reportId)) {
             return null;
         }
 
         CxWSResponseScanResults scanReport = client.getScanReport(sessionId, reportId);
 
-        if(!scanReport.isIsSuccesfull()) {
+        if (!scanReport.isIsSuccesfull()) {
             log.warn("fail to create scan report");
             log.debug("fail to create scan report: " + createScanReportResponse.getErrorMessage());
             return null;
@@ -222,13 +222,13 @@ public class CxClient {
 
     }
 
-    private boolean waitForReport(long reportId){
+    private boolean waitForReport(long reportId) {
         long timeToStop = (System.currentTimeMillis() / 1000) + generateReportTimeLimitInSec;
         CxWSReportStatusResponse scanReportStatus = null;
 
 
         while ((System.currentTimeMillis() / 1000) <= timeToStop) {
-            log.debug("waiting for server to generate pdf report"  + (timeToStop - (System.currentTimeMillis() / 1000)) + " sec left to timeout");
+            log.debug("waiting for server to generate pdf report" + (timeToStop - (System.currentTimeMillis() / 1000)) + " sec left to timeout");
             try {
                 Thread.sleep(2000); //Get status every 2 sec
             } catch (InterruptedException e) {
@@ -240,24 +240,24 @@ public class CxClient {
             scanReportStatus = client.getScanReportStatus(sessionId, reportId);
 
 
-            if(!scanReportStatus.isIsSuccesfull()) {
+            if (!scanReportStatus.isIsSuccesfull()) {
                 log.warn("fail to generate pdf report");
                 log.debug("fail to get status from scan report: " + scanReportStatus.getErrorMessage());
                 return false;
             }
 
-            if( scanReportStatus.isIsFailed()) {
+            if (scanReportStatus.isIsFailed()) {
                 log.warn("fail to generate pdf report");
                 log.debug("scan report status returned failed");
                 return false;
             }
 
-            if(scanReportStatus.isIsReady()) {
+            if (scanReportStatus.isIsReady()) {
                 return true;
             }
         }
 
-        if(scanReportStatus == null || !scanReportStatus.isIsReady()) {
+        if (scanReportStatus == null || !scanReportStatus.isIsReady()) {
             log.warn("fail to generate pdf report");
             log.debug("wait for generate report timed out");
             return false;
@@ -268,14 +268,14 @@ public class CxClient {
 
     private ScanDisplayData getScanDisplayData() throws MojoExecutionException {
         CxWSResponseScansDisplayData scanDataResponse = client.getScansDisplayDataForAllProjects(sessionId);
-        if(!scanDataResponse.isIsSuccesfull()) {
+        if (!scanDataResponse.isIsSuccesfull()) {
             throw new MojoExecutionException("fail to get scan data: " + scanDataResponse.getErrorMessage());
         }
 
         List<ScanDisplayData> scanList = scanDataResponse.getScanList().getScanDisplayData();
         long projectID = scanResponse.getProjectID();
         for (ScanDisplayData scan : scanList) {
-            if(projectID == scan.getProjectId()) {
+            if (projectID == scan.getProjectId()) {
                 return scan;
             }
         }

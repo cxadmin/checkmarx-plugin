@@ -18,7 +18,7 @@ public class ClientDataGen {
         return singleStat;
     }
 
-    public static CxWSReportRequest genReportRequest(long scanId, CxWSReportType type){
+    public static CxWSReportRequest genReportRequest(long scanId, CxWSReportType type) {
         CxWSReportRequest ret = new CxWSReportRequest();
         ret.setScanID(scanId);
         ret.setType(type);

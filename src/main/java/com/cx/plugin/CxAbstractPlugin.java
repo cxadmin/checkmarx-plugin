@@ -73,17 +73,17 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.directory}\\checkmarx")
     protected File outputDirectory;
 
-    @Parameter( defaultValue = "${project}", readonly = true, required = true )
+    @Parameter(defaultValue = "${project}", readonly = true, required = true)
     protected MavenProject project;
 
-    @Parameter( defaultValue = "${project.build.finalName}", readonly = true )
+    @Parameter(defaultValue = "${project.build.finalName}", readonly = true)
     protected String finalName;
 
-    @Parameter( defaultValue = "${reactorProjects}", readonly = true )
+    @Parameter(defaultValue = "${reactorProjects}", readonly = true)
     protected List<MavenProject> reactorProjects;
 
 
-    @Component( role = Archiver.class, hint = "zip" )
+    @Component(role = Archiver.class, hint = "zip")
     protected ZipArchiver zipArchiver;
 
     public static final String SOURCES_ZIP_NAME = "sources";
@@ -101,7 +101,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         log = getLog();
 
-        if(shouldSkip()) {
+        if (shouldSkip()) {
             log.info("project has no sources (reactor), skipping");
             return;
         }
@@ -111,7 +111,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         cxClient = new CxClient(username, password, url, scanTimeoutInMinuets, getLog());
 
         //perform login to server
-        log.info("logging in to checkmarx service at: " +url);
+        log.info("logging in to checkmarx service at: " + url);
         cxClient.loginToServer();
 
         //prepare sources to scan (zip them)
@@ -125,7 +125,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         cxClient.createProject(conf);
         log.info("project created successfully");
 
-        if(!isSynchronous) {
+        if (!isSynchronous) {
             log.info("not waiting for scan to finnish");
             return;
         }
@@ -134,14 +134,14 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         cxClient.waitForScanToFinnish();
 
         //create scan report
-        if(generatePDFReport) {
+        if (generatePDFReport) {
             log.info("generating PDF report");
             createScanReport();
         }
 
         //get scan results
         ScanDisplayData scanResults = cxClient.getScanResults();
-        scanResultsUrl = String.format( url + "/CxWebClient/ViewerMain.aspx?scanId=%s&ProjectID=%s", scanResults.getScanID(), scanResults.getProjectId());
+        scanResultsUrl = String.format(url + "/CxWebClient/ViewerMain.aspx?scanId=%s&ProjectID=%s", scanResults.getScanID(), scanResults.getProjectId());
 
         printResultsToConsole(scanResults);
 
@@ -154,15 +154,15 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     }
 
     private void printResultsToConsole(ScanDisplayData scanResults) {
-        log.info("high severity: " +scanResults.getHighSeverityResults());
-        log.info("high severity: " +scanResults.getHighSeverityResults());
-        log.info("medium severity: " +scanResults.getMediumSeverityResults());
-        log.info("low severity: " +scanResults.getLowSeverityResults());
+        log.info("high severity: " + scanResults.getHighSeverityResults());
+        log.info("high severity: " + scanResults.getHighSeverityResults());
+        log.info("medium severity: " + scanResults.getMediumSeverityResults());
+        log.info("low severity: " + scanResults.getLowSeverityResults());
         log.info("scan results can be found at: " + scanResultsUrl);
 
     }
 
-    protected void generateHTMLReport(ScanDisplayData scanResults){
+    protected void generateHTMLReport(ScanDisplayData scanResults) {
 
         File htmlReportFile = new File(outputDirectory + "\\report.html");
         ClassLoader classLoader = getClass().getClassLoader();
@@ -193,16 +193,16 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
     private void assertVulnerabilities(ScanDisplayData scanResults) throws MojoFailureException {
 
-        if(highSeveritiesThreshHold > 0 && scanResults.getHighSeverityResults() > highSeveritiesThreshHold) {
-            throw new MojoFailureException("high severity results is above threshold: " +scanResults.getHighSeverityResults());
+        if (highSeveritiesThreshHold > 0 && scanResults.getHighSeverityResults() > highSeveritiesThreshHold) {
+            throw new MojoFailureException("high severity results is above threshold: " + scanResults.getHighSeverityResults());
         }
 
-        if(mediumSeveritiesThreshHold > 0 && scanResults.getMediumSeverityResults() > mediumSeveritiesThreshHold) {
-            throw new MojoFailureException("medium severity results is above threshold: " +scanResults.getMediumSeverityResults());
+        if (mediumSeveritiesThreshHold > 0 && scanResults.getMediumSeverityResults() > mediumSeveritiesThreshHold) {
+            throw new MojoFailureException("medium severity results is above threshold: " + scanResults.getMediumSeverityResults());
         }
 
-        if(lowSeveritiesThreshHold > 0 && scanResults.getLowSeverityResults() > lowSeveritiesThreshHold) {
-            throw new MojoFailureException("low severity results is above threshold: " +scanResults.getLowSeverityResults());
+        if (lowSeveritiesThreshHold > 0 && scanResults.getLowSeverityResults() > lowSeveritiesThreshHold) {
+            throw new MojoFailureException("low severity results is above threshold: " + scanResults.getLowSeverityResults());
         }
     }
 
@@ -229,9 +229,9 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     protected void createScanReport() throws MojoExecutionException {
         byte[] scanReport = cxClient.getScanReport(CxWSReportType.PDF);
 
-        if(scanReport != null) {
+        if (scanReport != null) {
             try {
-                FileUtils.writeByteArrayToFile(new File( outputDirectory, PDF_REPORT_NAME + ".pdf"), scanReport);
+                FileUtils.writeByteArrayToFile(new File(outputDirectory, PDF_REPORT_NAME + ".pdf"), scanReport);
             } catch (IOException e) {
                 log.warn("fail to create report");
                 log.debug("fail to create report: ", e);
@@ -243,8 +243,6 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
     protected abstract boolean shouldSkip();
 
-
-
     protected abstract void zipSources() throws MojoExecutionException;
 
     protected void zipSourcesHelper(List<MavenProject> projects) throws MojoExecutionException {
@@ -252,7 +250,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         for (MavenProject p : projects) {
 
             MavenProject subProject = getProject(p);
-            if ( "pom".equals(subProject.getPackaging())) {
+            if ("pom".equals(subProject.getPackaging())) {
                 continue;
             }
 
@@ -262,8 +260,8 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
             List compileSourceRoots = subProject.getCompileSourceRoots();
             for (Object c : compileSourceRoots) {
 
-                File sourceDir = new File((String)c);
-                if(sourceDir.exists()) {
+                File sourceDir = new File((String) c);
+                if (sourceDir.exists()) {
                     zipArchiver.addDirectory(sourceDir, prefix);
                 }
             }
@@ -272,20 +270,19 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
             List reSourceRoots = subProject.getResources();
             for (Object c : reSourceRoots) {
 
-                Resource resource = (Resource)c;
+                Resource resource = (Resource) c;
                 File resourceDir = new File(resource.getDirectory());
-                if(resourceDir.exists()) {
+                if (resourceDir.exists()) {
                     zipArchiver.addDirectory(resourceDir, prefix);
                 }
             }
         }
 
 
-
         zipArchiver.setDestFile(new File(outputDirectory, SOURCES_ZIP_NAME + ".zip"));
         try {
             zipArchiver.createArchive();
-            log.info("sources zipped at: " + outputDirectory + "\\" +SOURCES_ZIP_NAME + ".zip");
+            log.info("sources zipped at: " + outputDirectory + "\\" + SOURCES_ZIP_NAME + ".zip");
         } catch (IOException e) {
             throw new MojoExecutionException("fail to create zip sources: ", e);
         }
