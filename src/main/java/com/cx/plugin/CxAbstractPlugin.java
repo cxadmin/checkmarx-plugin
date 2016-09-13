@@ -207,7 +207,6 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     }
 
     protected byte[] getBytesFromZippedSources() throws MojoExecutionException {
-
         log.debug("converting zipped sources to byte array");
         byte[] zipFileByte;
         try {
@@ -225,7 +224,6 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         return zipFileByte;
     }
 
-
     protected void createScanReport() throws MojoExecutionException {
         byte[] scanReport = cxClient.getScanReport(CxWSReportType.PDF);
 
@@ -237,8 +235,6 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
                 log.debug("fail to create report: ", e);
             }
         }
-
-
     }
 
     protected abstract boolean shouldSkip();
