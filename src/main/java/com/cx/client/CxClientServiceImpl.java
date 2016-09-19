@@ -1,8 +1,11 @@
-package com.cx.plugin;
+package com.cx.client;
 
 import com.checkmarx.v7.*;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.logging.Log;
+import com.cx.client.dto.*;
+import com.cx.client.exception.CxClientException;
+import org.codehaus.plexus.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.namespace.QName;
 import javax.xml.ws.BindingProvider;
@@ -13,83 +16,59 @@ import java.util.List;
  * Created by: Dorg.
  * Date: 18/08/2016.
  */
-public class CxClient {
+public class CxClientServiceImpl implements CxClientService {
 
-    private Log log;
+    private static final Logger log = LoggerFactory.getLogger(CxClientServiceImpl.class);
     private String sessionId;
     private CxSDKWebServiceSoap client;
-    private Credentials credentials;
-    private CxWSResponseRunID scanResponse;
-    private ScanDisplayData scanDisplayData;
-    private int scanTimeoutInMin = -1;
-    private int generateReportTimeLimitInSec = 60;
 
 
     private static final QName SERVICE_NAME = new QName("http://Checkmarx.com/v7", "CxSDKWebService");
     private static URL WSDL_LOCATION = CxSDKWebService.class.getClassLoader().getResource("WEB-INF/CxSDKWebService.wsdl");
 
+    int GENERATE_REPORT_TIME_OUT_IN_SEC = 500;
 
-    public CxClient(String username, String password, URL url, int scanTimeoutInMin, Log log) {
 
+
+
+    public CxClientServiceImpl(String url) {
         CxSDKWebService ss = new CxSDKWebService(WSDL_LOCATION, SERVICE_NAME);
         client = ss.getCxSDKWebServiceSoap();
         BindingProvider bindingProvider = (BindingProvider) client;
         bindingProvider.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, url + "/cxwebinterface/sdk/CxSDKWebService.asmx");
-        credentials = new Credentials();
-        credentials.setUser(username);
-        credentials.setPass(password);
-        this.scanTimeoutInMin = scanTimeoutInMin;
-        this.log = log;
-
     }
 
-    public void loginToServer() throws MojoExecutionException {
+    public void loginToServer(String username, String password) throws CxClientException {
 
+        Credentials credentials = new Credentials();
+        credentials.setUser(username);
+        credentials.setPass(password);
         CxWSResponseLoginData res = client.login(credentials, 1099);
         sessionId = res.getSessionId();
 
-        if (sessionId == null) {
-            throw new MojoExecutionException("fail to perform login: " + res.getErrorMessage());
+        if(sessionId == null) {
+            throw new CxClientException("fail to perform login: " + res.getErrorMessage());
         }
     }
 
-    public void createProject(ScanConfiguration conf) throws MojoExecutionException {
 
-        CliScanArgs cliScanArgs = new CliScanArgs();
-        cliScanArgs.setClientOrigin(CxClientType.SDK);
-        cliScanArgs.setIsIncremental(conf.isIncrementalScan());
+    public CreateScanResponse createLocalScan(LocalScanConfiguration conf) throws CxClientException {
 
-        ProjectSettings prjSettings = new ProjectSettings();
-        prjSettings.setProjectName(conf.getProjectName());
-        if (conf.getPreset() != null) {
-            long presetIdFromName = getPresetIdFromName(conf.getPreset());
-            if (presetIdFromName == 0) {
-                log.warn("preset [" + conf.getPreset() + "] not found. scanning with default preset");
-            }
-            prjSettings.setPresetID(presetIdFromName);
-        }
+        CliScanArgs cliScanArgs = CxPluginHelper.genCliScanArgs(conf);
 
-        String associatedGroupId = null;
-        if (conf.getFullTeamPath() != null) {
-            associatedGroupId = getGroupIdFromTeamPath(conf.getFullTeamPath());
-            if (associatedGroupId == null) {
-                log.warn("Team Path [" + conf.getFullTeamPath() + "] not found");
-            }
-        }
-        prjSettings.setAssociatedGroupID(associatedGroupId);
-        cliScanArgs.setPrjSettings(prjSettings);
-
+        //todo do this (handler)
+        //SourceCodeSettings srcCodeSettings = blah(conf);
         SourceCodeSettings srcCodeSettings = new SourceCodeSettings();
         srcCodeSettings.setSourceOrigin(SourceLocationType.LOCAL);
-        LocalCodeContainer packageCode = new LocalCodeContainer();
-        packageCode.setFileName(prjSettings.getProjectName() + "_" + System.currentTimeMillis());
-        packageCode.setZippedFile(conf.getZippedSources());
 
+        LocalCodeContainer packageCode = new LocalCodeContainer();
+        packageCode.setFileName(conf.getFileName());
+        packageCode.setZippedFile(conf.getZippedSources());
         srcCodeSettings.setPackagedCode(packageCode);
         cliScanArgs.setSrcCodeSettings(srcCodeSettings);
 
         //todo problem with that
-        if (conf.getFolderExclusions() != null || conf.getFileExclusions() != null) {
+        if(conf.getFolderExclusions() != null || conf.getFileExclusions() != null) {
             SourceFilterPatterns filter = new SourceFilterPatterns();
             filter.setExcludeFilesPatterns(conf.getFileExclusions());
             filter.setExcludeFoldersPatterns(conf.getFolderExclusions());
@@ -97,55 +76,94 @@ public class CxClient {
         }
 
         log.info("sending scan request");
-        scanResponse = client.scan(sessionId, cliScanArgs);
-        if (!scanResponse.isIsSuccesfull()) {
-            throw new MojoExecutionException("fail to perform scan: " + scanResponse.getErrorMessage());
+        CxWSResponseRunID scanResponse = client.scan(sessionId, cliScanArgs);
+
+        if(!scanResponse.isIsSuccesfull()) {
+            throw new CxClientException("fail to perform scan: " + scanResponse.getErrorMessage());
         }
 
+        log.debug("create scan returned with projectId: {}, runId: {}", scanResponse.getProjectID(), scanResponse.getRunId());
+
+        return  new CreateScanResponse(scanResponse.getProjectID(), scanResponse.getRunId());
     }
 
 
-    private String getGroupIdFromTeamPath(String fullTeamPath) throws MojoExecutionException {
 
+    //todo do this. local/shared scan handler by Class type (localConfig/tfsConfig...)
+    //public abstract SourceCodeSettings blah(BaseScanConfiguration conf);
+
+    public CreateScanResponse createLocalScanResolveFields(LocalScanConfiguration conf) throws CxClientException {
+
+        //resolve preset
+        if(conf.getPreset() != null) {
+            long presetId = resolvePresetIdFromName(conf.getPreset());
+            conf.setPresetId(presetId);
+            if(presetId == 0 && conf.isFailPresetNotFound()) {
+                throw new CxClientException("preset: ["+conf.getPreset()+"], not found");
+            }
+        }
+
+        //resolve preset
+        if(conf.getFullTeamPath() != null) {
+            String groupId = resolveGroupIdFromTeamPath(conf.getFullTeamPath());
+            conf.setGroupId(groupId);
+            if(groupId == null && conf.isFailTeamNotFound()) {
+                throw new CxClientException("team: ["+conf.getFullTeamPath()+"], not found");
+            }
+        }
+
+        return createLocalScan(conf);
+    }
+
+
+
+    public String resolveGroupIdFromTeamPath(String fullTeamPath) {
+        fullTeamPath = StringUtils.defaultString(fullTeamPath).trim();
         CxWSResponseGroupList associatedGroupsList = client.getAssociatedGroupsList(sessionId);
-        if (!associatedGroupsList.isIsSuccesfull()) {
+        if(!associatedGroupsList.isIsSuccesfull()) {
+            log.warn("fail to retrieve group list: ", associatedGroupsList.getErrorMessage());
             return null;
         }
 
         List<Group> group = associatedGroupsList.getGroupList().getGroup();
 
-        for (Group g : group) {
-            if (fullTeamPath.equals(g.getGroupName())) {
+        for (Group g: group) {
+            if(fullTeamPath.equalsIgnoreCase(g.getGroupName())){
                 return g.getID();
             }
 
         }
 
+        log.warn("team ["+fullTeamPath+"] not found");
         return null;
     }
 
-    private long getPresetIdFromName(String presetName) throws MojoExecutionException {
-
+    public long resolvePresetIdFromName(String presetName) {
+        presetName = StringUtils.defaultString(presetName).trim();
         CxWSResponsePresetList presetList = client.getPresetList(sessionId);
-        if (!presetList.isIsSuccesfull()) {
+        if(!presetList.isIsSuccesfull()) {
+            log.warn("fail to retrieve preset list: ", presetList.getErrorMessage());
             return 0;
         }
 
         List<Preset> preset = presetList.getPresetList().getPreset();
 
         for (Preset p : preset) {
-            if (presetName.equals(p.getPresetName())) {//presetName.equalsIgnoreCase(p.getPresetName(); todo ignore case?
+            if(presetName.equalsIgnoreCase(p.getPresetName())){
                 return p.getID();
             }
         }
-
+        log.warn("preset ["+presetName+"] not found", presetList.getErrorMessage());
         return 0;
     }
 
+    public void waitForScanToFinish(String runId) throws CxClientException {
+        waitForScanToFinish(runId, -1);
 
-    public void waitForScanToFinnish() throws MojoExecutionException {
+    }
 
-        String runId = scanResponse.getRunId();
+    public void waitForScanToFinish(String runId, long scanTimeoutInMin) throws CxClientException {
+
         long timeToStop = (System.currentTimeMillis() / 60000) + scanTimeoutInMin;
         CurrentStatusEnum currentStatus = null;
 
@@ -157,134 +175,118 @@ public class CxClient {
             try {
                 Thread.sleep(60000); //Get status every 60 sec
             } catch (InterruptedException e) {
-                throw new MojoExecutionException("caught exception during sleep", e);
+                log.debug("caught exception during sleep", e);
             }
 
             CxWSResponseScanStatus scanStatus = client.getStatusOfSingleScan(sessionId, runId);
 
-            if (!scanStatus.isIsSuccesfull()) {
-                throw new MojoExecutionException("fail to get status from scan: " + scanStatus.getErrorMessage());
+            if(!scanStatus.isIsSuccesfull()) {
+                log.warn("fail to get status from scan: " + scanStatus.getErrorMessage());
+                continue;
             }
 
             currentStatus = scanStatus.getCurrentStatus();
 
-            if (CurrentStatusEnum.FAILED.equals(currentStatus) ||
+            if(CurrentStatusEnum.FAILED.equals(currentStatus) ||
                     CurrentStatusEnum.CANCELED.equals(currentStatus) ||
                     CurrentStatusEnum.DELETED.equals(currentStatus) ||
                     CurrentStatusEnum.UNKNOWN.equals(currentStatus)) {
 
-                throw new MojoExecutionException("scan cannot be completed. status [" + currentStatus.value() + "]");
+                throw new CxClientException("scan cannot be completed. status ["+currentStatus.value()+"]");
             }
 
-            if (CurrentStatusEnum.FINISHED.equals(currentStatus)) {
-                scanDisplayData = getScanDisplayData();
+            if(CurrentStatusEnum.FINISHED.equals(currentStatus)) {
                 return;
             }
 
-            log.info("waiting for scan to finnish. " + ((System.currentTimeMillis() / 60000) - startTime) + " minuets elapsed");
+            log.info("waiting for scan to finish. " + ((System.currentTimeMillis() / 60000) - startTime) + " minuets elapsed");
 
         }
 
-        if (!CurrentStatusEnum.FINISHED.equals(currentStatus)) {
-            String status = currentStatus == null ? CurrentStatusEnum.UNKNOWN.value() : currentStatus.value();
-            throw new MojoExecutionException("scan has reached the time limit. status: [" + status + "]");
+        if(!CurrentStatusEnum.FINISHED.equals(currentStatus)) {
+            String status =  currentStatus == null ? CurrentStatusEnum.UNKNOWN.value() : currentStatus.value();
+            throw new CxClientException("scan has reached the the time limit ("+scanTimeoutInMin+" minuets). status: ["+ status +"]");
         }
-
-        log.info("retrieving scan results");
-        scanDisplayData = getScanDisplayData();
-
     }
 
-    public byte[] getScanReport(CxWSReportType reportType) {
-        CxWSCreateReportResponse createScanReportResponse = client.createScanReport(
-                sessionId, ClientDataGen.genReportRequest(scanDisplayData.getScanID(), reportType));
+    public ScanResults retrieveScanResults(long projectID) throws CxClientException {
+        CxWSResponseScansDisplayData scanDataResponse = client.getScansDisplayDataForAllProjects(sessionId);
+        if(!scanDataResponse.isIsSuccesfull()) {
+            throw new CxClientException("fail to get scan data: " + scanDataResponse.getErrorMessage());
+        }
 
-        if (!createScanReportResponse.isIsSuccesfull()) {
-            log.warn("fail to create scan report");
-            log.debug("fail to create scan report: " + createScanReportResponse.getErrorMessage());
-            return null;
+        List<ScanDisplayData> scanList = scanDataResponse.getScanList().getScanDisplayData();
+        for (ScanDisplayData scan : scanList) {
+            if(projectID == scan.getProjectId()) {
+                return CxPluginHelper.genScanResponse(scan);
+            }
+        }
+
+        throw new CxClientException("no scan data found for projectID ["+projectID+"]");
+    }
+
+
+
+
+    public byte[] getScanReport(long scanId, ReportType reportType) throws CxClientException {
+
+        CxWSReportRequest cxWSReportRequest = new CxWSReportRequest();
+        cxWSReportRequest.setScanID(scanId);
+        CxWSReportType cxWSReportType = CxWSReportType.valueOf(reportType.name());
+        cxWSReportRequest.setType(cxWSReportType);
+        CxWSCreateReportResponse createScanReportResponse = client.createScanReport(sessionId, cxWSReportRequest);
+
+        if(!createScanReportResponse.isIsSuccesfull()) {
+            log.warn("fail to create scan report: " + createScanReportResponse.getErrorMessage());
+            throw new CxClientException("fail to create scan report: " + createScanReportResponse.getErrorMessage());
         }
 
         long reportId = createScanReportResponse.getID();
-        if (!waitForReport(reportId)) {
-            return null;
-        }
+        waitForReport(reportId);
 
         CxWSResponseScanResults scanReport = client.getScanReport(sessionId, reportId);
 
-        if (!scanReport.isIsSuccesfull()) {
-            log.warn("fail to create scan report");
+        if(!scanReport.isIsSuccesfull()) {
             log.debug("fail to create scan report: " + createScanReportResponse.getErrorMessage());
-            return null;
+            throw new CxClientException("fail to retrieve scan report: " + createScanReportResponse.getErrorMessage());
         }
 
         return scanReport.getScanResults();
 
     }
 
-    private boolean waitForReport(long reportId) {
-        long timeToStop = (System.currentTimeMillis() / 1000) + generateReportTimeLimitInSec;
+    private void waitForReport(long reportId) throws CxClientException {
+        //todo: const+ research of the appropriate time
+        long timeToStop = (System.currentTimeMillis() / 1000) + GENERATE_REPORT_TIME_OUT_IN_SEC;
         CxWSReportStatusResponse scanReportStatus = null;
 
-
         while ((System.currentTimeMillis() / 1000) <= timeToStop) {
-            log.debug("waiting for server to generate pdf report" + (timeToStop - (System.currentTimeMillis() / 1000)) + " sec left to timeout");
+            log.debug("waiting for server to generate pdf report"  + (timeToStop - (System.currentTimeMillis() / 1000)) + " sec left to timeout");
             try {
                 Thread.sleep(2000); //Get status every 2 sec
             } catch (InterruptedException e) {
-                log.warn("fail to generate pdf report");
                 log.debug("caught exception during sleep", e);
-                return false;
             }
 
             scanReportStatus = client.getScanReportStatus(sessionId, reportId);
 
 
-            if (!scanReportStatus.isIsSuccesfull()) {
-                log.warn("fail to generate pdf report");
-                log.debug("fail to get status from scan report: " + scanReportStatus.getErrorMessage());
-                return false;
+            if(!scanReportStatus.isIsSuccesfull()) {
+                log.warn("fail to get status from scan report: " + scanReportStatus.getErrorMessage());
             }
 
-            if (scanReportStatus.isIsFailed()) {
-                log.warn("fail to generate pdf report");
-                log.debug("scan report status returned failed");
-                return false;
+            if( scanReportStatus.isIsFailed()) {
+                throw new CxClientException("generation of scan report [id="+reportId+"] failed");
             }
 
-            if (scanReportStatus.isIsReady()) {
-                return true;
+            if(scanReportStatus.isIsReady()) {
+                return;
             }
         }
 
-        if (scanReportStatus == null || !scanReportStatus.isIsReady()) {
-            log.warn("fail to generate pdf report");
-            log.debug("wait for generate report timed out");
-            return false;
+        if(scanReportStatus == null || !scanReportStatus.isIsReady()) {
+            throw new CxClientException("generation of scan report [id="+reportId+"] failed. timed out");
         }
-
-        return true;
     }
 
-    private ScanDisplayData getScanDisplayData() throws MojoExecutionException {
-        CxWSResponseScansDisplayData scanDataResponse = client.getScansDisplayDataForAllProjects(sessionId);
-        if (!scanDataResponse.isIsSuccesfull()) {
-            throw new MojoExecutionException("fail to get scan data: " + scanDataResponse.getErrorMessage());
-        }
-
-        List<ScanDisplayData> scanList = scanDataResponse.getScanList().getScanDisplayData();
-        long projectID = scanResponse.getProjectID();
-        for (ScanDisplayData scan : scanList) {
-            if (projectID == scan.getProjectId()) {
-                return scan;
-            }
-        }
-
-        throw new MojoExecutionException("fail to get scan data: no scan found");
-    }
-
-
-    public ScanDisplayData getScanResults() {
-        return scanDisplayData;
-    }
 }
