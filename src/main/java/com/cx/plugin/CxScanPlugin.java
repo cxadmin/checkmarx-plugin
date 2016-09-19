@@ -9,7 +9,7 @@ import org.apache.maven.plugins.annotations.Mojo;
  */
 
 @Mojo(name = "scan", aggregator = true)
-public class CxPlugin extends CxAbstractPlugin {
+public class CxScanPlugin extends CxAbstractPlugin {
 
 
     @Override

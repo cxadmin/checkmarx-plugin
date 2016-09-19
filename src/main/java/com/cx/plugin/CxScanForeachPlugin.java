@@ -11,7 +11,7 @@ import java.util.Collections;
  */
 
 @Mojo(name = "scan-foreach")
-public class CxForeachPlugin extends CxAbstractPlugin {
+public class CxScanForeachPlugin extends CxAbstractPlugin {
 
     @Override
     protected boolean shouldSkip() {
