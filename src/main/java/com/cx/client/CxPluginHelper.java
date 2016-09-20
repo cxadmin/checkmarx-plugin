@@ -1,10 +1,8 @@
 package com.cx.client;
 
-import com.checkmarx.v7.CliScanArgs;
-import com.checkmarx.v7.CxClientType;
-import com.checkmarx.v7.ProjectSettings;
-import com.checkmarx.v7.ScanDisplayData;
+import com.checkmarx.v7.*;
 import com.cx.client.dto.BaseScanConfiguration;
+import com.cx.client.dto.ClientOrigin;
 import com.cx.client.dto.ScanResults;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -24,13 +22,14 @@ public abstract class CxPluginHelper {
     public static final String HTML_TEMPLATE_LOCATION = "com/cx/plugin/htmlReportTemplate.html";
 
 
-    public static ScanResults genScanResponse(ScanDisplayData scanDisplayData) {
+    public static ScanResults genScanResponse(ProjectScannedDisplayData scanDisplayData) {
         ScanResults ret = new ScanResults();
-        ret.setProjectId(scanDisplayData.getProjectId());
-        ret.setScanID(scanDisplayData.getScanID());
-        ret.setHighSeverityResults(scanDisplayData.getHighSeverityResults());
-        ret.setMediumSeverityResults(scanDisplayData.getMediumSeverityResults());
-        ret.setLowSeverityResults(scanDisplayData.getLowSeverityResults());
+        ret.setProjectId(scanDisplayData.getProjectID());
+        ret.setScanID(scanDisplayData.getLastScanID());
+        ret.setHighSeverityResults(scanDisplayData.getHighVulnerabilities());
+        ret.setMediumSeverityResults(scanDisplayData.getMediumVulnerabilities());
+        ret.setLowSeverityResults(scanDisplayData.getLowVulnerabilities());
+        ret.setInfoSeverityResults(scanDisplayData.getInfoVulnerabilities());
         ret.setRiskLevelScore(scanDisplayData.getRiskLevelScore());
 
         return ret;
@@ -41,9 +40,9 @@ public abstract class CxPluginHelper {
 
         CxClientType cxClientType = CxClientType.SDK;
         try {
-            cxClientType = CxClientType.valueOf(conf.getClientOrigin());
+            cxClientType = CxClientType.valueOf(conf.getClientOrigin().name());
         } catch (Exception e) {
-            log.debug("fail to convert client origin enum from value: {}. client origin set to SDK", conf.getClientOrigin());
+            log.debug("fail to convert client origin enum from value: {}. client origin set to SDK", conf.getClientOrigin().name());
         }
         cliScanArgs.setClientOrigin(cxClientType);
         cliScanArgs.setIsIncremental(conf.isIncrementalScan());
@@ -80,6 +79,11 @@ public abstract class CxPluginHelper {
         }
 
         return ret;
+
+    }
+
+    public static String composeScanLink(String url, ScanResults scanResults) {
+        return String.format( url + "/CxWebClient/ViewerMain.aspx?scanId=%s&ProjectID=%s", scanResults.getScanID(), scanResults.getProjectId());
 
     }
 

@@ -4,10 +4,10 @@ package com.cx.client.dto;
  * Created by: Dorg.
  * Date: 22/08/2016.
  */
-public abstract class BaseScanConfiguration {
+public class BaseScanConfiguration {
 
 
-    private String clientOrigin;
+    private ClientOrigin clientOrigin;
 
     private String projectName;
 
@@ -39,11 +39,11 @@ public abstract class BaseScanConfiguration {
 
     private boolean failTeamNotFound = false;
 
-    public String getClientOrigin() {
+    public ClientOrigin getClientOrigin() {
         return clientOrigin;
     }
 
-    public void setClientOrigin(String clientOrigin) {
+    public void setClientOrigin(ClientOrigin clientOrigin) {
         this.clientOrigin = clientOrigin;
     }
 

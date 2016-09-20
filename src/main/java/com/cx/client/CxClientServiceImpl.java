@@ -181,7 +181,7 @@ public class CxClientServiceImpl implements CxClientService {
             String secondsStr = (seconds < 10)?("0" + Long.toString(seconds)):(Long.toString(seconds));
 
             try {
-                Thread.sleep(10000); //Get status every 60 sec
+                Thread.sleep(10000); //Get status every 10 sec
             } catch (InterruptedException e) {
                 log.debug("caught exception during sleep", e);
             }
@@ -220,14 +220,14 @@ public class CxClientServiceImpl implements CxClientService {
     }
 
     public ScanResults retrieveScanResults(long projectID) throws CxClientException {
-        CxWSResponseScansDisplayData scanDataResponse = client.getScansDisplayDataForAllProjects(sessionId);
+        CxWSResponseProjectScannedDisplayData scanDataResponse = client.getProjectScannedDisplayData(sessionId);
         if(!scanDataResponse.isIsSuccesfull()) {
             throw new CxClientException("fail to get scan data: " + scanDataResponse.getErrorMessage());
         }
 
-        List<ScanDisplayData> scanList = scanDataResponse.getScanList().getScanDisplayData();
-        for (ScanDisplayData scan : scanList) {
-            if(projectID == scan.getProjectId()) {
+        List<ProjectScannedDisplayData> scanList = scanDataResponse.getProjectScannedList().getProjectScannedDisplayData();
+        for (ProjectScannedDisplayData scan : scanList) {
+            if(projectID == scan.getProjectID()) {
                 return CxPluginHelper.genScanResponse(scan);
             }
         }

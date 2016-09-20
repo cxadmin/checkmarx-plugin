@@ -3,10 +3,7 @@ package com.cx.plugin;
 import com.cx.client.CxClientService;
 import com.cx.client.CxClientServiceImpl;
 import com.cx.client.CxPluginHelper;
-import com.cx.client.dto.CreateScanResponse;
-import com.cx.client.dto.LocalScanConfiguration;
-import com.cx.client.dto.ReportType;
-import com.cx.client.dto.ScanResults;
+import com.cx.client.dto.*;
 import com.cx.client.exception.CxClientException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -122,7 +119,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
             cxClientService = new CxClientServiceImpl(url.toString());
 
             //perform login to server
-            log.info("log in to checkmarx service at: " + url);
+            log.info("loging in to checkmarx service");
             cxClientService.loginToServer(username, password);
 
             //prepare sources to scan (zip them)
@@ -147,7 +144,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
             log.info("scan finished. retrieving scan results");
             scanResults = cxClientService.retrieveScanResults(createScanResponse.getProjectId());
 
-            scanResultsUrl = String.format( url + "/CxWebClient/ViewerMain.aspx?scanId=%s&ProjectID=%s", scanResults.getScanID(), scanResults.getProjectId());
+            scanResultsUrl = CxPluginHelper.composeScanLink(url.toString(), scanResults);
 
             printResultsToConsole(scanResults);
 
@@ -176,12 +173,12 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     }
 
     private void printResultsToConsole(ScanResults scanResults) {
-        log.info("----------------------Scan Results:---------------------------");
-        log.info("High Severity: " +scanResults.getHighSeverityResults());
-        log.info("Medium Severity: " +scanResults.getMediumSeverityResults());
-        log.info("Low Severity: " +scanResults.getLowSeverityResults());
-        log.info("scan results can be found at: " + scanResultsUrl);
-        log.info("--------------------------------------------------------------");
+        log.info("----------------------------Scan Results:-------------------------------");
+        log.info("High Severity Results: " +scanResults.getHighSeverityResults());
+        log.info("Medium Severity Results: " +scanResults.getMediumSeverityResults());
+        log.info("Low Severity Results: " +scanResults.getLowSeverityResults());
+        log.info("Info Severity Results: " +scanResults.getInfoSeverityResults());
+        log.info("------------------------------------------------------------------------");
     }
 
     protected void generateHTMLReport(long scanId){
@@ -212,6 +209,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     private LocalScanConfiguration generateScanConfiguration(byte[] zippedSources) {
         LocalScanConfiguration ret = new LocalScanConfiguration();
         ret.setProjectName(projectName);
+        ret.setClientOrigin(ClientOrigin.MAVEN);
         ret.setFileExclusions(fileExclusions);
         ret.setFolderExclusions(folderExclusions);
         ret.setFullTeamPath(fullTeamPath);
