@@ -142,7 +142,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
             }
 
             //wait for scan to finish
-            log.info("waiting for scan to finish");
+            log.info("Starting Scan.");
             cxClientService.waitForScanToFinish(createScanResponse.getRunId(), scanTimeoutInMinuets);
             log.info("scan finished. retrieving scan results");
             scanResults = cxClientService.retrieveScanResults(createScanResponse.getProjectId());

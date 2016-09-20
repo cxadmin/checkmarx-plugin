@@ -167,13 +167,21 @@ public class CxClientServiceImpl implements CxClientService {
         long timeToStop = (System.currentTimeMillis() / 60000) + scanTimeoutInMin;
         CurrentStatusEnum currentStatus = null;
 
-        long startTime = (System.currentTimeMillis() / 60000);
+        long startTime = System.currentTimeMillis();
 
 
         while (scanTimeoutInMin < 0 || (System.currentTimeMillis() / 60000) <= timeToStop) {
 
+            long hours = (System.currentTimeMillis() - startTime) / 3600000;
+            long minutes = ((System.currentTimeMillis() - startTime) % 3600000) / 60000;
+            long seconds = ((System.currentTimeMillis() - startTime) % 60000) / 1000;
+
+            String hoursStr = (hours < 10)?("0" + Long.toString(hours)):(Long.toString(hours));
+            String minutesStr = (minutes < 10)?("0" + Long.toString(minutes)):(Long.toString(minutes));
+            String secondsStr = (seconds < 10)?("0" + Long.toString(seconds)):(Long.toString(seconds));
+
             try {
-                Thread.sleep(60000); //Get status every 60 sec
+                Thread.sleep(10000); //Get status every 60 sec
             } catch (InterruptedException e) {
                 log.debug("caught exception during sleep", e);
             }
@@ -198,8 +206,10 @@ public class CxClientServiceImpl implements CxClientService {
             if(CurrentStatusEnum.FINISHED.equals(currentStatus)) {
                 return;
             }
-
-            log.info("waiting for scan to finish. " + ((System.currentTimeMillis() / 60000) - startTime) + " minuets elapsed");
+            log.info("Waiting for Results. " +
+                    "Time Elapsed: " + hoursStr + ":" + minutesStr + ":" + secondsStr + ". " +
+                    scanStatus.getTotalPercent() + "% processed. " +
+                    "Status: " + scanStatus.getStageName() + ".");
 
         }
 
