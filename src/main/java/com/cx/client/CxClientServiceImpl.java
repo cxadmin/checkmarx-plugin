@@ -3,6 +3,7 @@ package com.cx.client;
 import com.checkmarx.v7.*;
 import com.cx.client.dto.*;
 import com.cx.client.exception.CxClientException;
+import org.codehaus.plexus.component.configurator.converters.basic.LongConverter;
 import org.codehaus.plexus.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +76,7 @@ public class CxClientServiceImpl implements CxClientService {
             srcCodeSettings.setSourceFilterLists(filter);
         }
 
-        log.info("sending scan request");
+        log.info("Sending Scan Request");
         CxWSResponseRunID scanResponse = client.scan(sessionId, cliScanArgs);
 
         if(!scanResponse.isIsSuccesfull()) {
@@ -208,7 +209,7 @@ public class CxClientServiceImpl implements CxClientService {
             }
             log.info("Waiting for Results. " +
                     "Time Elapsed: " + hoursStr + ":" + minutesStr + ":" + secondsStr + ". " +
-                    scanStatus.getTotalPercent() + "% processed. " +
+                    scanStatus.getTotalPercent() + "% Processed. " +
                     "Status: " + scanStatus.getStageName() + ".");
 
         }
