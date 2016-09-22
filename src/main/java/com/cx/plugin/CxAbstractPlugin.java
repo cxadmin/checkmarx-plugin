@@ -7,6 +7,8 @@ import com.cx.client.dto.*;
 import com.cx.client.exception.CxClientException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -23,7 +25,9 @@ import org.slf4j.impl.MavenLoggerAdapter;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by: Dorg.
@@ -90,6 +94,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     protected ZipArchiver zipArchiver;
 
     public static final String SOURCES_ZIP_NAME = "sources";
+    public static final String OSA_ZIP_NAME = "OSAScan";
     public static final String PDF_REPORT_NAME = "CxReport";
 
     protected CxClientService cxClientService;
@@ -114,6 +119,8 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
             if(url == null) {
                 url = new URL("http://localhost");
             }
+
+            printConfiguration();
             //initialize cx client
             log.debug("Initializing Cx Client");
             cxClientService = new CxClientServiceImpl(url.toString());
@@ -166,9 +173,28 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         }
 
         //assert vulnerabilities under threshold
-        if(scanResults != null) {
-            assertVulnerabilities(scanResults);
-        }
+        assertVulnerabilities(scanResults);
+
+    }
+
+    private void printConfiguration() {
+        log.info("----------------------------Configurations:-----------------------------");
+        log.info("username: " + username);
+        log.info("url: " + url);
+        log.info("projectName: " + projectName);
+        log.info("fullTeamPath: " + fullTeamPath);
+        log.info("preset: " + preset);
+        log.info("isIncrementalScan: " + isIncrementalScan);
+        log.info("folderExclusions: " + folderExclusions);
+        log.info("fileExclusions: " + fileExclusions);
+        log.info("isSynchronous: " + isSynchronous);
+        log.info("generatePDFReport: " + generatePDFReport);
+        log.info("highSeveritiesThreshHold: " + highSeveritiesThreshHold);
+        log.info("mediumSeveritiesThreshHold: " + mediumSeveritiesThreshHold);
+        log.info("lowSeveritiesThreshHold: " + lowSeveritiesThreshHold);
+        log.info("scanTimeoutInMinuets: " + scanTimeoutInMinuets);
+        log.info("outputDirectory: " + outputDirectory);
+        log.info("------------------------------------------------------------------------");
 
     }
 
@@ -225,16 +251,26 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
     private void assertVulnerabilities(ScanResults scanResults) throws MojoFailureException {
 
+        StringBuilder res = new StringBuilder("\n");
+        boolean fail = false;
         if(highSeveritiesThreshHold >= 0 && scanResults.getHighSeverityResults() > highSeveritiesThreshHold) {
-            throw new MojoFailureException("High Severity Results are Above Threshold. Results: "+scanResults.getHighSeverityResults()+". Threshold: " + highSeveritiesThreshHold);
+            res.append("High Severity Results are Above Threshold. Results: "+scanResults.getHighSeverityResults()+". Threshold: " + highSeveritiesThreshHold).append("\n");
+            fail = true;
         }
 
         if(mediumSeveritiesThreshHold >= 0 && scanResults.getMediumSeverityResults() > mediumSeveritiesThreshHold) {
-            throw new MojoFailureException("Medium Severity Results are Above Threshold. Results: "+scanResults.getMediumSeverityResults()+". Threshold: " + mediumSeveritiesThreshHold);
+            res.append("Medium Severity Results are Above Threshold. Results: "+scanResults.getMediumSeverityResults()+". Threshold: " + mediumSeveritiesThreshHold).append("\n");
+            fail = true;
+
         }
 
         if(lowSeveritiesThreshHold >= 0 && scanResults.getLowSeverityResults() > lowSeveritiesThreshHold) {
-            throw new MojoFailureException("Low Severity Results are Above Threshold. Results: "+scanResults.getLowSeverityResults()+". Threshold: " + lowSeveritiesThreshHold);
+            res.append("Low Severity Results are Above Threshold. Results: "+scanResults.getLowSeverityResults()+". Threshold: " + lowSeveritiesThreshHold).append("\n");
+            fail = true;
+        }
+
+        if(fail) {
+            throw new MojoFailureException(res.toString());
         }
     }
 
@@ -257,32 +293,14 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         return zipFileByte;
     }
 
-    protected byte[] getBytesFromZippedSources2() throws MojoExecutionException {
-
-        log.debug("Converting Zipped Sources to Byte Array");
-        byte[] zipFileByte;
-        try {
-            InputStream fileStream = new FileInputStream(new File("C:\\temp\\commons-io-1.3.2.zip"));
-            zipFileByte = IOUtils.toByteArray(fileStream);
-        } catch (FileNotFoundException e) {
-
-            throw new MojoExecutionException("Fail to Set Zipped File Into Project.", e);
-
-        } catch (IOException e) {
-
-            throw new MojoExecutionException("Fail to Set Zipped File Into Project.", e);
-        }
-
-        return zipFileByte;
-    }
-
 
     protected void createPDFReport(long scanId) {
         log.info("Generating PDF Report");
         byte[] scanReport;
         try {
             scanReport = cxClientService.getScanReport(scanId, ReportType.PDF);
-            FileUtils.writeByteArrayToFile(new File( outputDirectory, PDF_REPORT_NAME + ".pdf"), scanReport);
+            String now = DateFormatUtils.format(new Date(), "dd_MM_yyyy-HH_mm_ss");
+            FileUtils.writeByteArrayToFile(new File( outputDirectory, PDF_REPORT_NAME + "_" + now + ".pdf"), scanReport);
             log.info("PDF Report Can Be Found in: " + outputDirectory +  "\\" + PDF_REPORT_NAME + ".pdf");
         } catch (Exception e) {
             log.warn("Fail to Generate PDF Report");
@@ -350,6 +368,25 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         }
 
         return p;
+    }
+
+
+    private void createZipForOSA() throws MojoExecutionException {
+
+        Set artifacts = project.getArtifacts();
+        for (Object arti :artifacts) {
+            Artifact a = (Artifact)arti;
+            zipArchiver.addFile(a.getFile(), a.getFile().getName());
+        }
+
+        zipArchiver.setDestFile(new File(outputDirectory, OSA_ZIP_NAME + ".zip"));
+        try {
+            zipArchiver.createArchive();
+            log.info("Files for OSA scan zipped at: " + outputDirectory + "\\" +OSA_ZIP_NAME + ".zip");
+        } catch (IOException e) {
+            throw new MojoExecutionException("Fail to zip files for OSA scan:", e);
+        }
+
     }
 
 

@@ -2,9 +2,9 @@ package com.cx.client;
 
 import com.checkmarx.v7.*;
 import com.cx.client.dto.BaseScanConfiguration;
-import com.cx.client.dto.ClientOrigin;
 import com.cx.client.dto.ScanResults;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +51,8 @@ public abstract class CxPluginHelper {
         cliScanArgs.setComment(conf.getComment());
 
         ProjectSettings prjSettings = new ProjectSettings();
-        prjSettings.setProjectName(conf.getProjectName());
+        String projectName = StringUtils.isEmpty(conf.getFullTeamPath()) ? conf.getProjectName() : conf.getFullTeamPath() + "\\" +conf.getProjectName();
+        prjSettings.setProjectName(projectName);
         prjSettings.setPresetID(conf.getPresetId());
         prjSettings.setAssociatedGroupID(conf.getGroupId());
         prjSettings.setDescription(conf.getDescription());

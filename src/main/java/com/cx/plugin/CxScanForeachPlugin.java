@@ -2,6 +2,7 @@ package com.cx.plugin;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 
 import java.util.Collections;
 
@@ -10,7 +11,7 @@ import java.util.Collections;
  * Date: 17/08/2016.
  */
 
-@Mojo(name = "scan-foreach")
+@Mojo(name = "scan-foreach", requiresDependencyResolution = ResolutionScope.TEST)
 public class CxScanForeachPlugin extends CxAbstractPlugin {
 
     @Override

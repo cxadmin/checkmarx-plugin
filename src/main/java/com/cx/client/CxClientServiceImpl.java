@@ -1,9 +1,11 @@
 package com.cx.client;
 
 import com.checkmarx.v7.*;
-import com.cx.client.dto.*;
+import com.cx.client.dto.CreateScanResponse;
+import com.cx.client.dto.LocalScanConfiguration;
+import com.cx.client.dto.ReportType;
+import com.cx.client.dto.ScanResults;
 import com.cx.client.exception.CxClientException;
-import org.codehaus.plexus.component.configurator.converters.basic.LongConverter;
 import org.codehaus.plexus.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -160,7 +162,6 @@ public class CxClientServiceImpl implements CxClientService {
 
     public void waitForScanToFinish(String runId) throws CxClientException {
         waitForScanToFinish(runId, -1);
-
     }
 
     public void waitForScanToFinish(String runId, long scanTimeoutInMin) throws CxClientException {
@@ -216,7 +217,7 @@ public class CxClientServiceImpl implements CxClientService {
 
         if(!CurrentStatusEnum.FINISHED.equals(currentStatus)) {
             String status =  currentStatus == null ? CurrentStatusEnum.UNKNOWN.value() : currentStatus.value();
-            throw new CxClientException("scan has reached the the time limit ("+scanTimeoutInMin+" minuets). status: ["+ status +"]");
+            throw new CxClientException("scan has reached the time limit ("+scanTimeoutInMin+" minutes). status: ["+ status +"]");
         }
     }
 
