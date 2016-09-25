@@ -161,7 +161,7 @@ public class CxClientServiceImpl implements CxClientService {
     }
 
     public void waitForScanToFinish(String runId) throws CxClientException {
-        waitForScanToFinish(runId, -1);
+        waitForScanToFinish(runId, 0);
     }
 
     public void waitForScanToFinish(String runId, long scanTimeoutInMin) throws CxClientException {
@@ -172,7 +172,7 @@ public class CxClientServiceImpl implements CxClientService {
         long startTime = System.currentTimeMillis();
 
 
-        while (scanTimeoutInMin < 0 || (System.currentTimeMillis() / 60000) <= timeToStop) {
+        while (scanTimeoutInMin <= 0 || (System.currentTimeMillis() / 60000) <= timeToStop) {
 
             long hours = (System.currentTimeMillis() - startTime) / 3600000;
             long minutes = ((System.currentTimeMillis() - startTime) % 3600000) / 60000;

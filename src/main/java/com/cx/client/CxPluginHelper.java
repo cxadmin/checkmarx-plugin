@@ -85,7 +85,10 @@ public abstract class CxPluginHelper {
 
     public static String composeScanLink(String url, ScanResults scanResults) {
         return String.format( url + "/CxWebClient/ViewerMain.aspx?scanId=%s&ProjectID=%s", scanResults.getScanID(), scanResults.getProjectId());
+    }
 
+    public static String composeProjectStateLink(String url, long projectId) {
+        return String.format( url + "/CxWebClient/portal#/projectState/%s/Summary", projectId);
     }
 
 }

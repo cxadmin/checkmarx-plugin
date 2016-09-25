@@ -68,17 +68,17 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     @Parameter(defaultValue = "${cx.generatePDFReport}")
     protected boolean generatePDFReport = true;
 
-    @Parameter(defaultValue = "${cx.highSeveritiesThreshHold}")
-    protected int highSeveritiesThreshHold = -1;
+    @Parameter(defaultValue = "${cx.highSeveritiesThreshold}")
+    protected int highSeveritiesThreshold = -1;
 
-    @Parameter(defaultValue = "${cx.mediumSeveritiesThreshHold}")
-    protected int mediumSeveritiesThreshHold = -1;
+    @Parameter(defaultValue = "${cx.mediumSeveritiesThreshold}")
+    protected int mediumSeveritiesThreshold = -1;
 
-    @Parameter(defaultValue = "${cx.lowSeveritiesThreshHold}")
-    protected int lowSeveritiesThreshHold = -1;
+    @Parameter(defaultValue = "${cx.lowSeveritiesThreshold}")
+    protected int lowSeveritiesThreshold = -1;
 
     @Parameter(defaultValue = "${cx.scanTimeoutInMinuets}")
-    protected int scanTimeoutInMinuets = -1;
+    protected int scanTimeoutInMinuets = 0;
 
     @Parameter(defaultValue = "${project.build.directory}\\checkmarx")
     protected File outputDirectory;
@@ -138,10 +138,10 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
             LocalScanConfiguration conf = generateScanConfiguration(zippedSources);
             log.info("Creating Scan");
             CreateScanResponse createScanResponse = cxClientService.createLocalScanResolveFields(conf);
-            log.info("Scan Created Successfully");
+            log.info("Scan Created Successfully. Link to Project State: " + CxPluginHelper.composeProjectStateLink(url.toString(), createScanResponse.getProjectId()));
 
             if(!isSynchronous) {
-                log.info("Not Waiting for Scan to Finish");
+                log.info("Running in Asynchronous Mode. Not Waiting for Scan to Finish");
                 return;
             }
 
@@ -189,9 +189,9 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         log.info("fileExclusions: " + fileExclusions);
         log.info("isSynchronous: " + isSynchronous);
         log.info("generatePDFReport: " + generatePDFReport);
-        log.info("highSeveritiesThreshHold: " + highSeveritiesThreshHold);
-        log.info("mediumSeveritiesThreshHold: " + mediumSeveritiesThreshHold);
-        log.info("lowSeveritiesThreshHold: " + lowSeveritiesThreshHold);
+        log.info("highSeveritiesThreshold: " + highSeveritiesThreshold);
+        log.info("mediumSeveritiesThreshold: " + mediumSeveritiesThreshold);
+        log.info("lowSeveritiesThreshold: " + lowSeveritiesThreshold);
         log.info("scanTimeoutInMinuets: " + scanTimeoutInMinuets);
         log.info("outputDirectory: " + outputDirectory);
         log.info("------------------------------------------------------------------------");
@@ -216,7 +216,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
             File htmlReportFile = new File(outputDirectory + "\\report.html");
 
-            String html = CxPluginHelper.compileHtmlReport(csv, highSeveritiesThreshHold, mediumSeveritiesThreshHold, lowSeveritiesThreshHold);
+            String html = CxPluginHelper.compileHtmlReport(csv, highSeveritiesThreshold, mediumSeveritiesThreshold, lowSeveritiesThreshold);
 
             if(html != null) {
                 FileUtils.writeStringToFile(htmlReportFile, html, Charset.defaultCharset());
@@ -253,19 +253,19 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
         StringBuilder res = new StringBuilder("\n");
         boolean fail = false;
-        if(highSeveritiesThreshHold >= 0 && scanResults.getHighSeverityResults() > highSeveritiesThreshHold) {
-            res.append("High Severity Results are Above Threshold. Results: "+scanResults.getHighSeverityResults()+". Threshold: " + highSeveritiesThreshHold).append("\n");
+        if(highSeveritiesThreshold >= 0 && scanResults.getHighSeverityResults() > highSeveritiesThreshold) {
+            res.append("High Severity Results are Above Threshold. Results: "+scanResults.getHighSeverityResults()+". Threshold: " + highSeveritiesThreshold).append("\n");
             fail = true;
         }
 
-        if(mediumSeveritiesThreshHold >= 0 && scanResults.getMediumSeverityResults() > mediumSeveritiesThreshHold) {
-            res.append("Medium Severity Results are Above Threshold. Results: "+scanResults.getMediumSeverityResults()+". Threshold: " + mediumSeveritiesThreshHold).append("\n");
+        if(mediumSeveritiesThreshold >= 0 && scanResults.getMediumSeverityResults() > mediumSeveritiesThreshold) {
+            res.append("Medium Severity Results are Above Threshold. Results: "+scanResults.getMediumSeverityResults()+". Threshold: " + mediumSeveritiesThreshold).append("\n");
             fail = true;
 
         }
 
-        if(lowSeveritiesThreshHold >= 0 && scanResults.getLowSeverityResults() > lowSeveritiesThreshHold) {
-            res.append("Low Severity Results are Above Threshold. Results: "+scanResults.getLowSeverityResults()+". Threshold: " + lowSeveritiesThreshHold).append("\n");
+        if(lowSeveritiesThreshold >= 0 && scanResults.getLowSeverityResults() > lowSeveritiesThreshold) {
+            res.append("Low Severity Results are Above Threshold. Results: "+scanResults.getLowSeverityResults()+". Threshold: " + lowSeveritiesThreshold).append("\n");
             fail = true;
         }
 
