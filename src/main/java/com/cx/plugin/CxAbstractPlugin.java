@@ -47,7 +47,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     @Parameter(defaultValue = "${project.name}", property = "cx.projectName")
     protected String projectName;
 
-    @Parameter(property = "${cx.fullTeamPath}")
+    @Parameter(property = "cx.fullTeamPath")
     protected String fullTeamPath;
 
     @Parameter(defaultValue = "Default 2014", property = "cx.preset")
