@@ -168,9 +168,9 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
             throw new MojoExecutionException("Something Went Wrong: " + e.getMessage());
 
         } catch (Exception e) {
-            log.debug("Unexpected Exception:", e);
-            throw new MojoExecutionException("Something Went Wrong: " + e.getMessage());
-        }
+        log.debug("Unexpected Exception:", e);
+        throw new MojoExecutionException("Something Went Wrong: " + e.getMessage());
+    }
 
         //assert vulnerabilities under threshold
         assertVulnerabilities(scanResults);
@@ -189,9 +189,9 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         log.info("fileExclusions: " + fileExclusions);
         log.info("isSynchronous: " + isSynchronous);
         log.info("generatePDFReport: " + generatePDFReport);
-        log.info("highSeveritiesThreshold: " + highSeveritiesThreshold);
-        log.info("mediumSeveritiesThreshold: " + mediumSeveritiesThreshold);
-        log.info("lowSeveritiesThreshold: " + lowSeveritiesThreshold);
+        log.info("highSeveritiesThreshold: " + (highSeveritiesThreshold < 0 ? "[No Threshold]" : highSeveritiesThreshold));
+        log.info("mediumSeveritiesThreshold: " + (mediumSeveritiesThreshold < 0 ? "[No Threshold]" : mediumSeveritiesThreshold));
+        log.info("lowSeveritiesThreshold: " + (lowSeveritiesThreshold < 0 ? "[No Threshold]" : lowSeveritiesThreshold));
         log.info("scanTimeoutInMinuets: " + scanTimeoutInMinuets);
         log.info("outputDirectory: " + outputDirectory);
         log.info("------------------------------------------------------------------------");
@@ -214,13 +214,15 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
             byte[] scanReport = cxClientService.getScanReport(scanId, ReportType.CSV);
             String csv = new String(scanReport);
 
-            File htmlReportFile = new File(outputDirectory + "\\report.html");
+            String now = DateFormatUtils.format(new Date(), "dd_MM_yyyy-HH_mm_ss");
+            String htmlFileName = "report" + "_" + now + ".html";
+            File htmlReportFile = new File(outputDirectory + "\\" + htmlFileName);
 
             String html = CxPluginHelper.compileHtmlReport(csv, highSeveritiesThreshold, mediumSeveritiesThreshold, lowSeveritiesThreshold);
 
             if(html != null) {
                 FileUtils.writeStringToFile(htmlReportFile, html, Charset.defaultCharset());
-                log.info("HTML Report Can Be Found in: " + outputDirectory +  "\\report.html");
+                log.info("HTML Report Can Be Found in: " + outputDirectory +  "\\" + htmlFileName);
             } else {
                 log.warn("Fail To Generate HTML Report");
             }
@@ -254,18 +256,18 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         StringBuilder res = new StringBuilder("\n");
         boolean fail = false;
         if(highSeveritiesThreshold >= 0 && scanResults.getHighSeverityResults() > highSeveritiesThreshold) {
-            res.append("High Severity Results are Above Threshold. Results: "+scanResults.getHighSeverityResults()+". Threshold: " + highSeveritiesThreshold).append("\n");
+            res.append("High Severity Results are Above Threshold. Results: ").append(scanResults.getHighSeverityResults()).append(". Threshold: ").append(highSeveritiesThreshold).append("\n");
             fail = true;
         }
 
         if(mediumSeveritiesThreshold >= 0 && scanResults.getMediumSeverityResults() > mediumSeveritiesThreshold) {
-            res.append("Medium Severity Results are Above Threshold. Results: "+scanResults.getMediumSeverityResults()+". Threshold: " + mediumSeveritiesThreshold).append("\n");
+            res.append("Medium Severity Results are Above Threshold. Results: ").append(scanResults.getMediumSeverityResults()).append(". Threshold: ").append(mediumSeveritiesThreshold).append("\n");
             fail = true;
 
         }
 
         if(lowSeveritiesThreshold >= 0 && scanResults.getLowSeverityResults() > lowSeveritiesThreshold) {
-            res.append("Low Severity Results are Above Threshold. Results: "+scanResults.getLowSeverityResults()+". Threshold: " + lowSeveritiesThreshold).append("\n");
+            res.append("Low Severity Results are Above Threshold. Results: ").append(scanResults.getLowSeverityResults()).append(". Threshold: ").append(lowSeveritiesThreshold).append("\n");
             fail = true;
         }
 
@@ -300,8 +302,9 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         try {
             scanReport = cxClientService.getScanReport(scanId, ReportType.PDF);
             String now = DateFormatUtils.format(new Date(), "dd_MM_yyyy-HH_mm_ss");
-            FileUtils.writeByteArrayToFile(new File( outputDirectory, PDF_REPORT_NAME + "_" + now + ".pdf"), scanReport);
-            log.info("PDF Report Can Be Found in: " + outputDirectory +  "\\" + PDF_REPORT_NAME + ".pdf");
+            String pdfFileName = PDF_REPORT_NAME + "_" + now + ".pdf";
+            FileUtils.writeByteArrayToFile(new File( outputDirectory, pdfFileName), scanReport);
+            log.info("PDF Report Can Be Found in: " + outputDirectory +  "\\" + pdfFileName);
         } catch (Exception e) {
             log.warn("Fail to Generate PDF Report");
             log.debug("Fail to Generate PDF Report", e);
