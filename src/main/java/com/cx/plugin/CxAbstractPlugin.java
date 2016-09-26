@@ -35,52 +35,52 @@ import java.util.Set;
  */
 public abstract class CxAbstractPlugin extends AbstractMojo {
 
-    @Parameter(required = true, defaultValue = "${cx.username}")
+    @Parameter(required = true, property = "cx.username")
     protected String username;
 
-    @Parameter(required = true, defaultValue="${cx.password}")
+    @Parameter(required = true, property="cx.password")
     protected String password;
 
-    @Parameter(defaultValue = "${cx.url}")
+    @Parameter(defaultValue = "http://localhost", property = "cx.url")
     protected URL url;
 
-    @Parameter(defaultValue = "${project.name}")
+    @Parameter(defaultValue = "${project.name}", property = "cx.projectName")
     protected String projectName;
 
-    @Parameter(defaultValue = "${cx.fullTeamPath}")
+    @Parameter(property = "${cx.fullTeamPath}")
     protected String fullTeamPath;
 
-    @Parameter(defaultValue = "${cx.preset}")
-    protected String preset = "Default 2014";
+    @Parameter(defaultValue = "Default 2014", property = "cx.preset")
+    protected String preset;
 
-    @Parameter(defaultValue = "${cx.isIncrementalScan}")
-    protected boolean isIncrementalScan = true;
+    @Parameter(defaultValue = "true", property = "cx.isIncrementalScan")
+    protected boolean isIncrementalScan;
 
-    @Parameter(defaultValue = "${cx.folderExclusions}")
+    @Parameter(property = "cx.folderExclusions")
     protected String folderExclusions;
 
-    @Parameter(defaultValue = "${cx.fileExclusions}")
+    @Parameter(property = "cx.fileExclusions")
     protected String fileExclusions;
 
-    @Parameter(defaultValue = "${cx.isSynchronous}")
-    protected boolean isSynchronous = true;
+    @Parameter(defaultValue = "true", property = "cx.isSynchronous")
+    protected boolean isSynchronous;
 
-    @Parameter(defaultValue = "${cx.generatePDFReport}")
-    protected boolean generatePDFReport = true;
+    @Parameter(defaultValue = "true", property = "cx.generatePDFReport")
+    protected boolean generatePDFReport;
 
-    @Parameter(defaultValue = "${cx.highSeveritiesThreshold}")
-    protected int highSeveritiesThreshold = -1;
+    @Parameter(defaultValue = "-1", property = "cx.highSeveritiesThreshold")
+    protected int highSeveritiesThreshold;
 
-    @Parameter(defaultValue = "${cx.mediumSeveritiesThreshold}")
-    protected int mediumSeveritiesThreshold = -1;
+    @Parameter(defaultValue = "-1", property = "cx.mediumSeveritiesThreshold")
+    protected int mediumSeveritiesThreshold;
 
-    @Parameter(defaultValue = "${cx.lowSeveritiesThreshold}")
-    protected int lowSeveritiesThreshold = -1;
+    @Parameter(defaultValue = "-1", property = "cx.lowSeveritiesThreshold")
+    protected int lowSeveritiesThreshold;
 
-    @Parameter(defaultValue = "${cx.scanTimeoutInMinuets}")
-    protected int scanTimeoutInMinuets = 0;
+    @Parameter(defaultValue = "0", property ="cx.scanTimeoutInMinuets")
+    protected int scanTimeoutInMinuets;
 
-    @Parameter(defaultValue = "${project.build.directory}\\checkmarx")
+    @Parameter(defaultValue = "${project.build.directory}\\checkmarx", property = "cx.outputDirectory")
     protected File outputDirectory;
 
     @Parameter( defaultValue = "${project}", readonly = true, required = true )
@@ -115,10 +115,6 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         }
 
         try {
-
-            if(url == null) {
-                url = new URL("http://localhost");
-            }
 
             printConfiguration();
             //initialize cx client
@@ -168,9 +164,9 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
             throw new MojoExecutionException("Something Went Wrong: " + e.getMessage());
 
         } catch (Exception e) {
-        log.debug("Unexpected Exception:", e);
-        throw new MojoExecutionException("Something Went Wrong: " + e.getMessage());
-    }
+            log.debug("Unexpected Exception:", e);
+            throw new MojoExecutionException("Something Went Wrong: " + e.getMessage());
+        }
 
         //assert vulnerabilities under threshold
         assertVulnerabilities(scanResults);
