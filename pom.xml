@@ -90,57 +90,64 @@
             <version>2.0.1</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.maven.reporting</groupId>
+            <artifactId>maven-reporting-api</artifactId>
+            <version>3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.reporting</groupId>
+            <artifactId>maven-reporting-impl</artifactId>
+            <version>2.2</version>
+        </dependency>
+
         <!-- apache cxf -->
         <!--<dependency>-->
-            <!--<groupId>org.apache.cxf</groupId>-->
-            <!--<artifactId>cxf-rt-frontend-jaxws</artifactId>-->
-            <!--<version>${cxf.version}</version>-->
+        <!--<groupId>org.apache.cxf</groupId>-->
+        <!--<artifactId>cxf-rt-frontend-jaxws</artifactId>-->
+        <!--<version>${cxf.version}</version>-->
         <!--</dependency>-->
         <!--<dependency>-->
-            <!--<groupId>org.apache.cxf</groupId>-->
-            <!--<artifactId>cxf-rt-transports-http</artifactId>-->
-            <!--<version>${cxf.version}</version>-->
+        <!--<groupId>org.apache.cxf</groupId>-->
+        <!--<artifactId>cxf-rt-transports-http</artifactId>-->
+        <!--<version>${cxf.version}</version>-->
         <!--</dependency>-->
         <!--<dependency>-->
-            <!--<groupId>com.sun.xml.bind</groupId>-->
-            <!--<artifactId>jaxb-xjc</artifactId>-->
-            <!--<version>${cxf.version}</version>-->
+        <!--<groupId>com.sun.xml.bind</groupId>-->
+        <!--<artifactId>jaxb-xjc</artifactId>-->
+        <!--<version>${cxf.version}</version>-->
         <!--</dependency>-->
-
 
 
     </dependencies>
 
-
-
-
     <build>
         <plugins>
             <!--<plugin>-->
-                <!--<groupId>org.apache.cxf</groupId>-->
-                <!--<artifactId>cxf-codegen-plugin</artifactId>-->
-                <!--<version>3.1.6</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<id>generate-sources</id>-->
-                        <!--<phase>generate-sources</phase>-->
-                        <!--<configuration>-->
-                            <!--<sourceRoot>${basedir}/src/main/java/</sourceRoot>-->
-                            <!--<wsdlOptions>-->
-                                <!--<wsdlOption>-->
-                                    <!--<wsdl>${basedir}/src/main/resources/WEB-INF/CxSDKWebService.wsdl</wsdl>-->
-                                    <!--&lt;!&ndash;<wsdlLocation>classpath:/CxSDKWebService.wsdl</wsdlLocation>&ndash;&gt;-->
-                                    <!--<extraargs>-->
-                                        <!--<extraarg>-client</extraarg>-->
-                                    <!--</extraargs>-->
-                                <!--</wsdlOption>-->
-                            <!--</wsdlOptions>-->
-                        <!--</configuration>-->
-                        <!--<goals>-->
-                            <!--<goal>wsdl2java</goal>-->
-                        <!--</goals>-->
-                    <!--</execution>-->
-                <!--</executions>-->
+            <!--<groupId>org.apache.cxf</groupId>-->
+            <!--<artifactId>cxf-codegen-plugin</artifactId>-->
+            <!--<version>3.1.6</version>-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<id>generate-sources</id>-->
+            <!--<phase>generate-sources</phase>-->
+            <!--<configuration>-->
+            <!--<sourceRoot>${basedir}/src/main/java/</sourceRoot>-->
+            <!--<wsdlOptions>-->
+            <!--<wsdlOption>-->
+            <!--<wsdl>${basedir}/src/main/resources/WEB-INF/CxSDKWebService.wsdl</wsdl>-->
+            <!--&lt;!&ndash;<wsdlLocation>classpath:/CxSDKWebService.wsdl</wsdlLocation>&ndash;&gt;-->
+            <!--<extraargs>-->
+            <!--<extraarg>-client</extraarg>-->
+            <!--</extraargs>-->
+            <!--</wsdlOption>-->
+            <!--</wsdlOptions>-->
+            <!--</configuration>-->
+            <!--<goals>-->
+            <!--<goal>wsdl2java</goal>-->
+            <!--</goals>-->
+            <!--</execution>-->
+            <!--</executions>-->
             <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -151,6 +158,7 @@
                         <id>default-descriptor</id>
                         <goals>
                             <goal>descriptor</goal>
+                            <goal>report</goal>
                         </goals>
                         <phase>process-classes</phase>
                     </execution>
@@ -166,6 +174,69 @@
         </plugins>
     </build>
 
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <version>3.5</version>
+            </plugin>
+        </plugins>
+    </reporting>
+
+    <developers>
+        <developer>
+            <name>Dor Golan</name>
+            <email>dor.golan@checkmarx.com</email>
+            <organization>Checkmarx</organization>
+            <organizationUrl>https://www.checkmarx.com/</organizationUrl>
+            <roles>
+                <role>Architect</role>
+                <role>Developer</role>
+            </roles>
+            <properties>
+                <picUrl>http://i.imgur.com/44Iil53.png</picUrl>
+            </properties>
+        </developer>
+        <developer>
+            <name>Gal Nussbaum</name>
+            <email>gal.nussbaum@checkmarx.com</email>
+            <organization>Checkmarx</organization>
+            <organizationUrl>https://www.checkmarx.com/</organizationUrl>
+            <roles>
+                <role>Developer</role>
+                <role>Automation Expert</role>
+            </roles>
+            <properties>
+                <picUrl>http://i.imgur.com/SSm4Onr.jpg</picUrl>
+            </properties>
+        </developer>
+        <developer>
+            <name>Guy 'Sushi' Zahavi</name>
+            <email>Guy.Zahavi@checkmarx.com</email>
+            <organization>Checkmarx</organization>
+            <organizationUrl>https://www.checkmarx.com/</organizationUrl>
+            <roles>
+                <role>Front-end Developer</role>
+                <role>Documentarist</role>
+            </roles>
+            <properties>
+                <picUrl>http://i.imgur.com/N9YR2c0.jpg</picUrl>
+            </properties>
+        </developer>
+        <developer>
+            <name>Yair David</name>
+            <email>Yair.David@checkmarx.com</email>
+            <organization>Checkmarx</organization>
+            <organizationUrl>https://www.checkmarx.com/</organizationUrl>
+            <roles>
+                <role>QA Manager</role>
+            </roles>
+            <properties>
+                <picUrl>http://i.imgur.com/EVIS8LO.jpg</picUrl>
+            </properties>
+        </developer>
+    </developers>
 
 
 </project>

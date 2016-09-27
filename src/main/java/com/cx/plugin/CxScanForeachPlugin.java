@@ -7,10 +7,8 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import java.util.Collections;
 
 /**
- * Created by: Dorg.
- * Date: 17/08/2016.
+ * The 'scan-foreach' goal creates a separate scan for each of the modules found in the reactor.
  */
-
 @Mojo(name = "scan-foreach", requiresDependencyResolution = ResolutionScope.TEST)
 public class CxScanForeachPlugin extends CxAbstractPlugin {
 

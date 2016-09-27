@@ -35,51 +35,108 @@ import java.util.Set;
  */
 public abstract class CxAbstractPlugin extends AbstractMojo {
 
+    /**
+     * The username of the user running the scan.
+     */
     @Parameter(required = true, property = "cx.username")
     protected String username;
 
+    /**
+     * The password of the user running the scan.
+     */
     @Parameter(required = true, property="cx.password")
     protected String password;
 
+    /**
+     * Host name of the Checkmarx application.
+     */
     @Parameter(defaultValue = "http://localhost", property = "cx.url")
     protected URL url;
 
+    /**
+     * The name of the project being scanned.
+     */
     @Parameter(defaultValue = "${project.name}", property = "cx.projectName")
     protected String projectName;
 
+    /**
+     * The full path describing the team the scan belongs to.
+     */
     @Parameter(property = "cx.fullTeamPath")
     protected String fullTeamPath;
 
+    /**
+     * Configure this field to scan the project with one of the predefined scan presets, or one of your custom presets.
+     */
     @Parameter(defaultValue = "Default 2014", property = "cx.preset")
     protected String preset;
 
+    /**
+     * If true, an incremental scan will be performed, meaning - only modified files will be scanned.
+     */
     @Parameter(defaultValue = "true", property = "cx.isIncrementalScan")
     protected boolean isIncrementalScan;
 
+    /**
+     * Configure this field if you want the scan to skip certain folders.
+     */
     @Parameter(property = "cx.folderExclusions")
     protected String folderExclusions;
 
+    /**
+     * Configure this field if you want the scan to skip certain files.
+     */
     @Parameter(property = "cx.fileExclusions")
     protected String fileExclusions;
 
+    /**
+     * If true, a synchronous scan will be performed - the scan will run until finished, and produce a results page.
+     * If false, the scan will be asynchronous - the scan will run in the background,
+     * and the results will appear, when finished, on the Checkmarx application.
+     */
     @Parameter(defaultValue = "true", property = "cx.isSynchronous")
     protected boolean isSynchronous;
 
+    /**
+     * If true, a PDF results page will be generated.
+     */
     @Parameter(defaultValue = "true", property = "cx.generatePDFReport")
     protected boolean generatePDFReport;
 
+    /**
+     * Configure a threshold for the High Severity Vulnerabilities.
+     * The scan will not fail if lower sum of High Severity Vulnerabilities is found.
+     * Set to -1 to ignore threshold.
+     */
     @Parameter(defaultValue = "-1", property = "cx.highSeveritiesThreshold")
     protected int highSeveritiesThreshold;
 
+    /**
+     * Configure a threshold for the Medium Severity Vulnerabilities.
+     * The scan will not fail if lower sum of Medium Severity Vulnerabilities is found.
+     * Set to -1 to ignore threshold.
+     */
     @Parameter(defaultValue = "-1", property = "cx.mediumSeveritiesThreshold")
     protected int mediumSeveritiesThreshold;
 
+    /**
+     * Configure a threshold for the Low Severity Vulnerabilities.
+     * The scan will not fail if lower sum of Low Severity Vulnerabilities is found.
+     * Set to -1 to ignore threshold.
+     */
     @Parameter(defaultValue = "-1", property = "cx.lowSeveritiesThreshold")
     protected int lowSeveritiesThreshold;
 
+    /**
+     * Define a timeout (in minutes) for the scan. If the specified time has passed, the build is failed.
+     * Set to 0 to run the scan with no time limit.
+     */
     @Parameter(defaultValue = "0", property ="cx.scanTimeoutInMinuets")
     protected int scanTimeoutInMinuets;
 
+    /**
+     * Define an output directory for the scan results.
+     */
     @Parameter(defaultValue = "${project.build.directory}\\checkmarx", property = "cx.outputDirectory")
     protected File outputDirectory;
 

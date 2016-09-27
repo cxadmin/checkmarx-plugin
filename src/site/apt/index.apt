@@ -1,0 +1,35 @@
+Checkmarx Maven Plugin
+
+	The Checkmarx Maven Plugin allows you to run the Checkmarx static application security test (SAST), \
+	as a stand-alone scan, or as part of any of the Maven life-cycles.
+
+Upcoming Features
+	
+	An Open Source Analysis (OSA) will be available soon.
+
+* Goals Overview
+
+  The Dependency plugin has two goals:
+
+  *{{{./scan-mojo.html}checkmarx:scan}} The Scan goal creates a single comprehensive scan, including all the modules in the reactor.
+
+  *{{{./scan-foreach-mojo.html}checkmarx:scan-foreach}} The 'scan-foreach' goal creates a separate scan for each of the modules found in the reactor.
+
+  []
+
+* Usage
+
+  General instructions on how to use the Checkmarx Plugin can be found on the {{{./usage.html}usage page}}. Some more
+  specific use cases are described in the examples given below. 
+
+  In case you still have questions regarding the plugin's usage, please have a look at the {{{./faq.html}FAQ}}.
+
+* Examples
+
+  The following examples show how to use the dependency plugin in more advanced use-cases:
+
+  * {{{./examples/example1.html}This is example 1}}.
+
+  * {{{./examples/example2.html}Annd this is example 2.}}
+
+  []

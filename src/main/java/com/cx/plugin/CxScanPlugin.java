@@ -5,10 +5,8 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /**
- * Created by: Dorg.
- * Date: 17/08/2016.
+ * The 'scan' goal creates a single comprehensive scan, including all the modules in the reactor.
  */
-
 @Mojo(name = "scan", aggregator = true, requiresDependencyResolution = ResolutionScope.TEST)
 public class CxScanPlugin extends CxAbstractPlugin {
 

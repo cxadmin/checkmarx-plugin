@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Maven-Checkmarx-Plugin of horhor">
+
+    <!-- **************** this loads the fluido skin - using bootstrap **************** -->
+    <skin>
+        <groupId>org.apache.maven.skins</groupId>
+        <artifactId>maven-fluido-skin</artifactId>
+        <version>1.2.1</version>
+    </skin>
+    <custom>
+        <fluidoSkin>
+            <sideBarEnabled>true</sideBarEnabled>
+        </fluidoSkin>
+    </custom>
+
+    <!-- **************** this configures the upper-left side image, alt and link **************** -->
+    <bannerLeft>
+        <name>Maven Checkmarx Plugin Logo</name>
+        <!--<src>http://s12.postimg.org/65ui4p6sd/cx_logo_alpha.png</src>-->
+        <src>http://i.imgur.com/kFD539p.png</src>
+        <href>https://www.checkmarx.com/</href>
+    </bannerLeft>
+
+     <!-- **************** this configures the upper-right side image, alt and link **************** -->
+    <bannerRight>
+        <name>Maven Logo</name>
+        <src>https://maven.apache.org/images/maven-logo-black-on-white.png</src>
+        <href>https://maven.apache.org/</href>
+    </bannerRight>
+
+    <!--to write html files, just write apt files and put in the apt folder-->
+    <!-- **************** this configures the main body - menus and links **************** -->
+    <body>
+        <menu name="Overview">
+            <item name="Introduction" href="index.html"></item>
+            <item name="Goals" href="plugin-info.html"></item>
+            <item name="Usage" href="usage.html"></item>
+            <item name="FAQ" href="faq.html"></item>
+        </menu>
+
+        <menu name="Examples">
+            <item name="description1" href="examples/example1.html"/>
+            <item name="description2" href="examples/example2.html"/>
+        </menu>
+
+        <menu name="Project Information">
+            <item name="About" href="index.html"></item>
+            <item name="Project Summary" href="project-summary.html"></item>
+            <item name="Dependencies" href="dependencies.html"></item>
+            <item name="Dependency Information" href="dependency-info.html"></item>
+            <item name="Plugin Management" href="plugin-management.html"></item>
+            <item name="Project Plugins" href="plugins.html"></item>
+            <item name="Project Team" href="team-list.html"></item>
+        </menu>
+    </body>
+
+</project>
