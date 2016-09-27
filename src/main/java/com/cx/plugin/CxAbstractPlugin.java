@@ -62,7 +62,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     /**
      * The full path describing the team the scan belongs to.
      */
-    @Parameter(property = "cx.fullTeamPath")
+    @Parameter(property = "cx.fullTeamPath", defaultValue = "CxServer")
     protected String fullTeamPath;
 
     /**
@@ -218,11 +218,11 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
         } catch (CxClientException e) {
             log.debug("Caught Exception: ", e);
-            throw new MojoExecutionException("Something Went Wrong: " + e.getMessage());
+            throw new MojoExecutionException(e.getMessage());
 
         } catch (Exception e) {
             log.debug("Unexpected Exception:", e);
-            throw new MojoExecutionException("Something Went Wrong: " + e.getMessage());
+            throw new MojoExecutionException(e.getMessage());
         }
 
         //assert vulnerabilities under threshold
