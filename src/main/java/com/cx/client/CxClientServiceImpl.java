@@ -202,7 +202,7 @@ public class CxClientServiceImpl implements CxClientService {
                     CurrentStatusEnum.DELETED.equals(currentStatus) ||
                     CurrentStatusEnum.UNKNOWN.equals(currentStatus)) {
 
-                throw new CxClientException("scan cannot be completed. status ["+currentStatus.value()+"]");
+                throw new CxClientException("scan cannot be completed. status ["+currentStatus.value()+"]. Stage message: ["+scanStatus.getStageMessage()+"]");
             }
 
             if(CurrentStatusEnum.FINISHED.equals(currentStatus)) {
