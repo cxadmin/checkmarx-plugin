@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.xml.namespace.QName;
 import javax.xml.ws.BindingProvider;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 
@@ -28,17 +30,36 @@ public class CxClientServiceImpl implements CxClientService {
 
     private static final QName SERVICE_NAME = new QName("http://Checkmarx.com/v7", "CxSDKWebService");
     private static URL WSDL_LOCATION = CxSDKWebService.class.getClassLoader().getResource("WEB-INF/CxSDKWebService.wsdl");
+    private static String CHECKMARX_SERVER_WAS_NOT_FOUND_ON_THE_SPECIFIED_ADDRESS = "Checkmarx server was not found on the specified address";
+    private static String SDK_PATH = "/cxwebinterface/sdk/CxSDKWebService.asmx";
 
-    int GENERATE_REPORT_TIME_OUT_IN_SEC = 500;
+    private static int generateReportTimeOutInSec = 500;
+    private static int waitForScanToFinishRetry = 5;
 
-
-
-
-    public CxClientServiceImpl(String url) {
+    public CxClientServiceImpl(URL url) throws CxClientException {
         CxSDKWebService ss = new CxSDKWebService(WSDL_LOCATION, SERVICE_NAME);
         client = ss.getCxSDKWebServiceSoap();
         BindingProvider bindingProvider = (BindingProvider) client;
-        bindingProvider.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, url + "/cxwebinterface/sdk/CxSDKWebService.asmx");
+        bindingProvider.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, url + SDK_PATH);
+        checkServerConnectivity(url);
+    }
+
+
+    private void checkServerConnectivity(URL url) throws CxClientException {
+
+        try {
+            HttpURLConnection urlConn;
+            URL toCheck = new URL(url + SDK_PATH);
+            urlConn = (HttpURLConnection) toCheck.openConnection();
+            urlConn.connect();
+            if (urlConn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                throw new CxClientException(CHECKMARX_SERVER_WAS_NOT_FOUND_ON_THE_SPECIFIED_ADDRESS + ": " + url);
+            }
+
+        } catch (IOException e) {
+            log.debug(CHECKMARX_SERVER_WAS_NOT_FOUND_ON_THE_SPECIFIED_ADDRESS + ": " + url, e);
+            throw new CxClientException(CHECKMARX_SERVER_WAS_NOT_FOUND_ON_THE_SPECIFIED_ADDRESS + ": " + url, e);
+        }
     }
 
     public void loginToServer(String username, String password) throws CxClientException {
@@ -160,27 +181,24 @@ public class CxClientServiceImpl implements CxClientService {
         return 0;
     }
 
-    public void waitForScanToFinish(String runId) throws CxClientException {
-        waitForScanToFinish(runId, 0);
+    public void waitForScanToFinish(String runId, ScanWaitHandler waitHandler) throws CxClientException {
+        waitForScanToFinish(runId, 0, waitHandler);
     }
 
-    public void waitForScanToFinish(String runId, long scanTimeoutInMin) throws CxClientException {
+    public void waitForScanToFinish(String runId, long scanTimeoutInMin, ScanWaitHandler waitHandler) throws CxClientException {
 
         long timeToStop = (System.currentTimeMillis() / 60000) + scanTimeoutInMin;
+
         CurrentStatusEnum currentStatus = null;
+        CxWSResponseScanStatus scanStatus = null;
 
         long startTime = System.currentTimeMillis();
 
+        waitHandler.onStart(startTime, scanTimeoutInMin);
+
+        int retry = waitForScanToFinishRetry;
 
         while (scanTimeoutInMin <= 0 || (System.currentTimeMillis() / 60000) <= timeToStop) {
-
-            long hours = (System.currentTimeMillis() - startTime) / 3600000;
-            long minutes = ((System.currentTimeMillis() - startTime) % 3600000) / 60000;
-            long seconds = ((System.currentTimeMillis() - startTime) % 60000) / 1000;
-
-            String hoursStr = (hours < 10)?("0" + Long.toString(hours)):(Long.toString(hours));
-            String minutesStr = (minutes < 10)?("0" + Long.toString(minutes)):(Long.toString(minutes));
-            String secondsStr = (seconds < 10)?("0" + Long.toString(seconds)):(Long.toString(seconds));
 
             try {
                 Thread.sleep(10000); //Get status every 10 sec
@@ -188,12 +206,20 @@ public class CxClientServiceImpl implements CxClientService {
                 log.debug("caught exception during sleep", e);
             }
 
-            CxWSResponseScanStatus scanStatus = client.getStatusOfSingleScan(sessionId, runId);
 
-            if(!scanStatus.isIsSuccesfull()) {
-                log.warn("fail to get status from scan: " + scanStatus.getErrorMessage());
+            try {
+                scanStatus = client.getStatusOfSingleScan(sessionId, runId);
+            } catch (Exception e) {
+                retry = checkRetry(retry, e.getMessage());
                 continue;
             }
+
+            if(!scanStatus.isIsSuccesfull()) {
+                retry = checkRetry(retry, scanStatus.getErrorMessage());
+                continue;
+            }
+
+            retry = waitForScanToFinishRetry;
 
             currentStatus = scanStatus.getCurrentStatus();
 
@@ -202,23 +228,34 @@ public class CxClientServiceImpl implements CxClientService {
                     CurrentStatusEnum.DELETED.equals(currentStatus) ||
                     CurrentStatusEnum.UNKNOWN.equals(currentStatus)) {
 
-                throw new CxClientException("scan cannot be completed. status ["+currentStatus.value()+"].\n Stage message: ["+scanStatus.getStageMessage()+"]");
+                waitHandler.onFail(scanStatus);
+
+                throw new CxClientException("scan cannot be completed. status ["+currentStatus.value()+"].");
             }
 
             if(CurrentStatusEnum.FINISHED.equals(currentStatus)) {
+                waitHandler.onSuccess(scanStatus);
                 return;
             }
-            log.info("Waiting for Results. " +
-                    "Time Elapsed: " + hoursStr + ":" + minutesStr + ":" + secondsStr + ". " +
-                    scanStatus.getTotalPercent() + "% Processed. " +
-                    "Status: " + scanStatus.getStageName() + ".");
 
+            waitHandler.onIdle(scanStatus);
         }
+
 
         if(!CurrentStatusEnum.FINISHED.equals(currentStatus)) {
-            String status =  currentStatus == null ? CurrentStatusEnum.UNKNOWN.value() : currentStatus.value();
-            throw new CxClientException("scan has reached the time limit ("+scanTimeoutInMin+" minutes). status: ["+ status +"]");
+            waitHandler.onTimeout(scanStatus);
+            throw new CxClientException("scan has reached the time limit. ("+scanTimeoutInMin+" minutes).");
         }
+    }
+
+    private int checkRetry(int retry, String errorMessage) throws CxClientException {
+        log.debug("fail to get status from scan. retrying ("+ (retry-1) + " tries left). error message: " + errorMessage);
+        retry--;
+        if(retry <=0) {
+            throw new CxClientException("fail to get status from scan. error message: " + errorMessage);
+        }
+
+        return retry;
     }
 
     public ScanResults retrieveScanResults(long projectID) throws CxClientException {
@@ -269,7 +306,7 @@ public class CxClientServiceImpl implements CxClientService {
 
     private void waitForReport(long reportId) throws CxClientException {
         //todo: const+ research of the appropriate time
-        long timeToStop = (System.currentTimeMillis() / 1000) + GENERATE_REPORT_TIME_OUT_IN_SEC;
+        long timeToStop = (System.currentTimeMillis() / 1000) + generateReportTimeOutInSec;
         CxWSReportStatusResponse scanReportStatus = null;
 
         while ((System.currentTimeMillis() / 1000) <= timeToStop) {
@@ -299,6 +336,22 @@ public class CxClientServiceImpl implements CxClientService {
         if(scanReportStatus == null || !scanReportStatus.isIsReady()) {
             throw new CxClientException("generation of scan report [id="+reportId+"] failed. timed out");
         }
+    }
+
+    public static int getWaitForScanToFinishRetry() {
+        return waitForScanToFinishRetry;
+    }
+
+    public static void setWaitForScanToFinishRetry(int waitForScanToFinishRetry) {
+        CxClientServiceImpl.waitForScanToFinishRetry = waitForScanToFinishRetry;
+    }
+
+    public static int getGenerateReportTimeOutInSec() {
+        return generateReportTimeOutInSec;
+    }
+
+    public static void setGenerateReportTimeOutInSec(int generateReportTimeOutInSec) {
+        CxClientServiceImpl.generateReportTimeOutInSec = generateReportTimeOutInSec;
     }
 
 }

@@ -176,7 +176,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
             printConfiguration();
             //initialize cx client
             log.debug("Initializing Cx Client");
-            cxClientService = new CxClientServiceImpl(url.toString());
+            cxClientService = new CxClientServiceImpl(url);
 
             //perform login to server
             log.info("Logging In to Checkmarx Service.");
@@ -200,7 +200,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
             //wait for scan to finish
             log.info("Starting Scan.");
-            cxClientService.waitForScanToFinish(createScanResponse.getRunId(), scanTimeoutInMinuets);
+            cxClientService.waitForScanToFinish(createScanResponse.getRunId(), scanTimeoutInMinuets, new MavenScanWaitHandler());
             log.info("Scan Finished. Retrieving Scan Results");
             scanResults = cxClientService.retrieveScanResults(createScanResponse.getProjectId());
 

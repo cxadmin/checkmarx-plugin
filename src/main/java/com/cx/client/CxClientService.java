@@ -22,7 +22,7 @@ public interface CxClientService {
 
     long resolvePresetIdFromName(String presetName);
 
-    void waitForScanToFinish(String runId) throws CxClientException;
+    void waitForScanToFinish(String runId, ScanWaitHandler waitHandler) throws CxClientException;
 
     /**
      *
@@ -30,7 +30,7 @@ public interface CxClientService {
      * @param scanTimeoutInMin set scanTimeoutInMin to -1 for no timeout
      * @throws CxClientException
      */
-    void waitForScanToFinish(String runId, long scanTimeoutInMin) throws CxClientException;
+    void waitForScanToFinish(String runId, long scanTimeoutInMin, ScanWaitHandler waitHandler) throws CxClientException;
 
     ScanResults retrieveScanResults(long projectID) throws CxClientException;
 
