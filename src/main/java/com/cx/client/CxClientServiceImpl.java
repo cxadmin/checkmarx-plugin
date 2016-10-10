@@ -323,6 +323,10 @@ public class CxClientServiceImpl implements CxClientService {
 
     }
 
+    public void close() {
+        //todo implement
+    }
+
     private void waitForReport(long reportId) throws CxClientException {
         //todo: const+ research of the appropriate time
         long timeToStop = (System.currentTimeMillis() / 1000) + generateReportTimeOutInSec;
