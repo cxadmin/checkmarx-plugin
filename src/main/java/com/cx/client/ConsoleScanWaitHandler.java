@@ -1,8 +1,7 @@
-package com.cx.plugin;
+package com.cx.client;
 
 import com.checkmarx.v7.CurrentStatusEnum;
 import com.checkmarx.v7.CxWSResponseScanStatus;
-import com.cx.client.ScanWaitHandler;
 import com.cx.client.exception.CxClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,9 +10,9 @@ import org.slf4j.LoggerFactory;
  * Created by: Dorg.
  * Date: 28/09/2016.
  */
-public class MavenScanWaitHandler implements ScanWaitHandler {
+public class ConsoleScanWaitHandler implements ScanWaitHandler<CxWSResponseScanStatus> {
 
-    private static final Logger log = LoggerFactory.getLogger(MavenScanWaitHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(ConsoleScanWaitHandler.class);
 
     private long startTime;
     private long scanTimeoutInMin;

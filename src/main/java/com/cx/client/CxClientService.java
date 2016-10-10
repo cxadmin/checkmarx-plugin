@@ -1,10 +1,16 @@
 package com.cx.client;
 
+import com.checkmarx.v7.CxWSResponseScanStatus;
 import com.cx.client.dto.CreateScanResponse;
 import com.cx.client.dto.LocalScanConfiguration;
 import com.cx.client.dto.ReportType;
 import com.cx.client.dto.ScanResults;
 import com.cx.client.exception.CxClientException;
+import com.cx.client.rest.dto.CreateOSAScanResponse;
+import com.cx.client.rest.dto.OSAScanStatus;
+import com.cx.client.rest.dto.OSASummaryResults;
+
+import java.io.File;
 
 /**
  * Created by: Dorg.
@@ -12,7 +18,7 @@ import com.cx.client.exception.CxClientException;
  */
 public interface CxClientService {
 
-    void loginToServer(String username, String password) throws CxClientException;
+    void loginToServer() throws CxClientException;
 
     CreateScanResponse createLocalScan(LocalScanConfiguration conf) throws CxClientException;
 
@@ -22,7 +28,7 @@ public interface CxClientService {
 
     long resolvePresetIdFromName(String presetName);
 
-    void waitForScanToFinish(String runId, ScanWaitHandler waitHandler) throws CxClientException;
+    void waitForScanToFinish(String runId, ScanWaitHandler<CxWSResponseScanStatus> waitHandler) throws CxClientException;
 
     /**
      *
@@ -30,10 +36,22 @@ public interface CxClientService {
      * @param scanTimeoutInMin set scanTimeoutInMin to -1 for no timeout
      * @throws CxClientException
      */
-    void waitForScanToFinish(String runId, long scanTimeoutInMin, ScanWaitHandler waitHandler) throws CxClientException;
+    void waitForScanToFinish(String runId, long scanTimeoutInMin, ScanWaitHandler<CxWSResponseScanStatus> waitHandler) throws CxClientException;
 
     ScanResults retrieveScanResults(long projectID) throws CxClientException;
 
+    CreateOSAScanResponse createOSAScan(long projectId, File zipFile) throws CxClientException;
+
+    OSAScanStatus waitForOSAScanToFinish(String scanId, long scanTimeoutInMin, ScanWaitHandler<OSAScanStatus> waitHandler) throws CxClientException;
+
+    OSASummaryResults retrieveOSAScanSummaryResults(long projectId) throws CxClientException;
+
+    String retrieveOSAScanHtmlResults(long projectId) throws CxClientException;
+
+    byte[] retrieveOSAScanPDFResults(long projectId) throws CxClientException;
+
     byte[] getScanReport(long scanId, ReportType reportType) throws CxClientException;
+
+    void close();//todo implement
 
 }

@@ -322,6 +322,7 @@
     var thresholdsString = '*RESULTS_THRESHOLD*';
 
     var csv = '*RESULTS_CSV*';
+    csv = csv.replace(/ï»¿/g, '');
 
     /* turn the thresholds string into an array */
     thresholdsString = thresholdsString.split(',');

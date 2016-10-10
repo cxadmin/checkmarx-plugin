@@ -6,12 +6,15 @@ import com.cx.client.dto.LocalScanConfiguration;
 import com.cx.client.dto.ReportType;
 import com.cx.client.dto.ScanResults;
 import com.cx.client.exception.CxClientException;
+import com.cx.client.rest.CxRestClient;
+import com.cx.client.rest.dto.*;
 import org.codehaus.plexus.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.namespace.QName;
 import javax.xml.ws.BindingProvider;
+import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -26,6 +29,11 @@ public class CxClientServiceImpl implements CxClientService {
     private static final Logger log = LoggerFactory.getLogger(CxClientServiceImpl.class);
     private String sessionId;
     private CxSDKWebServiceSoap client;
+    private CxRestClient restClient;
+
+    private String username;
+    private String password;
+    private URL url;
 
 
     private static final QName SERVICE_NAME = new QName("http://Checkmarx.com/v7", "CxSDKWebService");
@@ -36,12 +44,17 @@ public class CxClientServiceImpl implements CxClientService {
     private static int generateReportTimeOutInSec = 500;
     private static int waitForScanToFinishRetry = 5;
 
-    public CxClientServiceImpl(URL url) throws CxClientException {
+    public CxClientServiceImpl(URL url, String username, String password) throws CxClientException {
+        this.url = url;
+        this.username = username;
+        this.password = password;
+
         CxSDKWebService ss = new CxSDKWebService(WSDL_LOCATION, SERVICE_NAME);
         client = ss.getCxSDKWebServiceSoap();
         BindingProvider bindingProvider = (BindingProvider) client;
         bindingProvider.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, url + SDK_PATH);
         checkServerConnectivity(url);
+        restClient = new CxRestClient(url.toString(), username, password);
     }
 
 
@@ -62,7 +75,7 @@ public class CxClientServiceImpl implements CxClientService {
         }
     }
 
-    public void loginToServer(String username, String password) throws CxClientException {
+    public void loginToServer() throws CxClientException {
 
         Credentials credentials = new Credentials();
         credentials.setUser(username);
@@ -122,8 +135,12 @@ public class CxClientServiceImpl implements CxClientService {
         if(conf.getPreset() != null) {
             long presetId = resolvePresetIdFromName(conf.getPreset());
             conf.setPresetId(presetId);
-            if(presetId == 0 && conf.isFailPresetNotFound()) {
-                throw new CxClientException("preset: ["+conf.getPreset()+"], not found");
+            if(presetId == 0) {
+                if(conf.isFailPresetNotFound()) {
+                    throw new CxClientException("preset: ["+conf.getPreset()+"], not found");
+                } else {
+                    log.warn("preset ["+conf.getPreset()+"] not found. preset set to default.");
+                }
             }
         }
 
@@ -131,8 +148,12 @@ public class CxClientServiceImpl implements CxClientService {
         if(conf.getFullTeamPath() != null) {
             String groupId = resolveGroupIdFromTeamPath(conf.getFullTeamPath());
             conf.setGroupId(groupId);
-            if(groupId == null && conf.isFailTeamNotFound()) {
-                throw new CxClientException("team: ["+conf.getFullTeamPath()+"], not found");
+            if(groupId == null){
+                if(conf.isFailTeamNotFound()) {
+                    throw new CxClientException("team: ["+conf.getFullTeamPath()+"], not found");
+                } else {
+                    log.warn("team ["+conf.getFullTeamPath()+"] not found. team set to default.");
+                }
             }
         }
 
@@ -158,7 +179,6 @@ public class CxClientServiceImpl implements CxClientService {
 
         }
 
-        log.warn("team ["+fullTeamPath+"] not found");
         return null;
     }
 
@@ -177,15 +197,14 @@ public class CxClientServiceImpl implements CxClientService {
                 return p.getID();
             }
         }
-        log.warn("preset ["+presetName+"] not found", presetList.getErrorMessage());
         return 0;
     }
 
-    public void waitForScanToFinish(String runId, ScanWaitHandler waitHandler) throws CxClientException {
+    public void waitForScanToFinish(String runId, ScanWaitHandler<CxWSResponseScanStatus> waitHandler) throws CxClientException {
         waitForScanToFinish(runId, 0, waitHandler);
     }
 
-    public void waitForScanToFinish(String runId, long scanTimeoutInMin, ScanWaitHandler waitHandler) throws CxClientException {
+    public void waitForScanToFinish(String runId, long scanTimeoutInMin, ScanWaitHandler<CxWSResponseScanStatus> waitHandler) throws CxClientException {
 
         long timeToStop = (System.currentTimeMillis() / 60000) + scanTimeoutInMin;
 
@@ -336,6 +355,78 @@ public class CxClientServiceImpl implements CxClientService {
         if(scanReportStatus == null || !scanReportStatus.isIsReady()) {
             throw new CxClientException("generation of scan report [id="+reportId+"] failed. timed out");
         }
+    }
+
+    public CreateOSAScanResponse createOSAScan(long projectId, File zipFile) throws CxClientException {
+        restClient.login();
+        return restClient.createOSAScan(projectId, zipFile);
+    }
+
+
+    public OSAScanStatus waitForOSAScanToFinish(String scanId, long scanTimeoutInMin, ScanWaitHandler<OSAScanStatus> waitHandler) throws CxClientException {
+        //re login in case of session timed out
+        restClient.login();
+        long timeToStop = (System.currentTimeMillis() / 60000) + scanTimeoutInMin;
+
+        long startTime = System.currentTimeMillis();
+        OSAScanStatus scanStatus = null;
+        OSAScanStatusEnum status = null;
+
+        waitHandler.onStart(startTime, scanTimeoutInMin);
+
+        int retry = waitForScanToFinishRetry;
+
+        while (scanTimeoutInMin <= 0 || (System.currentTimeMillis() / 60000) <= timeToStop) {
+
+            try {
+                Thread.sleep(10000); //Get status every 10 sec
+            } catch (InterruptedException e) {
+                log.debug("caught exception during sleep", e);
+            }
+
+
+            try {
+                scanStatus = restClient.getOSAScanStatus(scanId);
+            } catch (Exception e) {
+                retry = checkRetry(retry, e.getMessage());
+                continue;
+            }
+
+            retry = waitForScanToFinishRetry;
+
+            status = scanStatus.getStatus();
+
+            if(OSAScanStatusEnum.FAILED.equals(status)) {
+                waitHandler.onFail(scanStatus);
+                throw new CxClientException("OSA scan cannot be completed. status ["+status.uiValue()+"].");
+            }
+
+
+            if(OSAScanStatusEnum.FINISHED.equals(status)) {
+                waitHandler.onSuccess(scanStatus);
+                return scanStatus;
+            }
+            waitHandler.onIdle(scanStatus);
+        }
+
+        if(!OSAScanStatusEnum.FINISHED.equals(status)) {
+            waitHandler.onTimeout(scanStatus);
+            throw new CxClientException("OSA scan has reached the time limit. ("+scanTimeoutInMin+" minutes).");
+        }
+
+        return scanStatus;
+    }
+
+    public OSASummaryResults retrieveOSAScanSummaryResults(long projectId) throws CxClientException {
+        return restClient.getOSAScanSummaryResults(projectId);
+    }
+
+    public String retrieveOSAScanHtmlResults(long projectId) throws CxClientException {
+        return restClient.getOSAScanHtmlResults(projectId);
+    }
+
+    public byte[] retrieveOSAScanPDFResults(long projectId) throws CxClientException {
+        return restClient.getOSAScanPDFResults(projectId);
     }
 
     public static int getWaitForScanToFinishRetry() {
