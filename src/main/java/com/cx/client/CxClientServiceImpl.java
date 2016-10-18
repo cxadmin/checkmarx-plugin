@@ -107,8 +107,8 @@ public class CxClientServiceImpl implements CxClientService {
         //todo problem with that
         if(conf.getFolderExclusions() != null || conf.getFileExclusions() != null) {
             SourceFilterPatterns filter = new SourceFilterPatterns();
-            filter.setExcludeFilesPatterns(conf.getFileExclusions());
-            filter.setExcludeFoldersPatterns(conf.getFolderExclusions());
+            filter.setExcludeFilesPatterns(conf.getFileExclusions() == null ? "" : conf.getFileExclusions());
+            filter.setExcludeFoldersPatterns(conf.getFolderExclusions() == null ? "" : conf.getFolderExclusions());
             srcCodeSettings.setSourceFilterLists(filter);
         }
 
