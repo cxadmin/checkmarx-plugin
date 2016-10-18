@@ -4,7 +4,6 @@ import com.cx.client.*;
 import com.cx.client.dto.*;
 import com.cx.client.exception.CxClientException;
 import com.cx.client.rest.dto.CreateOSAScanResponse;
-import com.cx.client.rest.dto.OSAScanStatus;
 import com.cx.client.rest.dto.OSASummaryResults;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -26,6 +25,7 @@ import org.slf4j.impl.MavenLoggerAdapter;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -135,8 +135,26 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     @Parameter(defaultValue = "0", property ="cx.scanTimeoutInMinuets")
     protected int scanTimeoutInMinuets;
 
-    @Parameter(defaultValue = "false", property ="cx.runOSAScan")
-    protected boolean runOSAScan;
+    @Parameter(defaultValue = "false", property ="cx.osaEnabled")
+    protected boolean osaEnabled;
+
+    @Parameter(property = "cx.osaExclusions")
+    protected String[] osaExclusions = new String[0];
+
+    @Parameter(defaultValue = "-1", property = "cx.osaHighSeveritiesThreshold")
+    protected int osaHighSeveritiesThreshold;
+
+    @Parameter(defaultValue = "-1", property = "cx.osaMediumSeveritiesThreshold")
+    protected int osaMediumSeveritiesThreshold;
+
+    @Parameter(defaultValue = "-1", property = "cx.osaLowSeveritiesThreshold")
+    protected int osaLowSeveritiesThreshold;
+
+    @Parameter(defaultValue = "true", property = "cx.osaGeneratePDFReport")
+    protected boolean osaGeneratePDFReport;
+
+    @Parameter(defaultValue = "true", property = "cx.osaGenerateHTMLReport")
+    protected boolean osaGenerateHTMLReport;
 
 
     /**
@@ -158,10 +176,13 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     public static final String SOURCES_ZIP_NAME = "sources";
     public static final String OSA_ZIP_NAME = "OSAScan";
     public static final String PDF_REPORT_NAME = "CxReport";
+    public static final String OSA_REPORT_NAME = "OSA_Report";
 
     protected CxClientService cxClientService;
 
-    String scanResultsUrl;
+    protected String scanResultsUrl;
+    protected String projectStateLink;
+
 
 
     private static Logger log = LoggerFactory.getLogger(CxAbstractPlugin.class);
@@ -170,6 +191,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         MavenLoggerAdapter.setLogger(getLog());
         ScanResults scanResults;
+        OSASummaryResults osaSummaryResults = null;
 
         if(shouldSkip()) {
             log.info("Project Has No Sources (Reactor), Skipping");
@@ -196,17 +218,18 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
             LocalScanConfiguration conf = generateScanConfiguration(zippedSources);
             log.info("Creating Scan");
             CreateScanResponse createScanResponse = cxClientService.createLocalScanResolveFields(conf);
-            log.info("Scan Created Successfully. Link to Project State: " + CxPluginHelper.composeProjectStateLink(url.toString(), createScanResponse.getProjectId()));
+            projectStateLink = CxPluginHelper.composeProjectStateLink(url.toString(), createScanResponse.getProjectId());
+            log.info("Scan Created Successfully. Link to Project State: " + projectStateLink);
 
-//            CreateOSAScanResponse osaScan = null;
-//            if(runOSAScan) {
-//                log.info("creating OSA scan");
-//                log.info("zipping dependencies");
-//                File zipForOSA = createZipForOSA();
-//                log.info("sending OSA scan request");
-//                osaScan = cxClientService.createOSAScan(createScanResponse.getProjectId(), zipForOSA);
-//                log.info("OSA scan created successfully");
-//            }
+            CreateOSAScanResponse osaScan = null;
+            if(osaEnabled) {
+                log.info("creating OSA scan");
+                log.info("zipping dependencies");
+                File zipForOSA = createZipForOSA();
+                log.info("sending OSA scan request");
+                osaScan = cxClientService.createOSAScan(createScanResponse.getProjectId(), zipForOSA);
+                log.info("OSA scan created successfully");
+            }
 
             if(!isSynchronous) {
                 log.info("Running in Asynchronous Mode. Not Waiting for Scan to Finish");
@@ -232,21 +255,32 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
                 createPDFReport(scanResults.getScanID());
             }
 
-//            if(runOSAScan) {
-//                OSAScanStatus osaScanStatus = cxClientService.waitForOSAScanToFinish(osaScan.getScanId(), -1, new OSAConsoleScanWaitHandler());
-//                log.info("creating OSA reports");
-//                OSASummaryResults osaSummaryResults = cxClientService.retrieveOSAScanSummaryResults(createScanResponse.getProjectId());
-//                printOSAResultsToConsole(osaSummaryResults);
-//                String osaHtml = cxClientService.retrieveOSAScanHtmlResults(createScanResponse.getProjectId());
-//                byte[] osaPDF  = cxClientService.retrieveOSAScanPDFResults(createScanResponse.getProjectId());
-//                String now = DateFormatUtils.format(new Date(), "dd_MM_yyyy-HH_mm_ss");
-//                String pdfFileName = "OSA_Report" + "_" + now + ".pdf";
-//                String htmlFileName = "OSA_Report" + "_" + now + ".html";
-//                FileUtils.writeStringToFile(new File( outputDirectory, htmlFileName), osaHtml, Charset.defaultCharset());
-//                FileUtils.writeByteArrayToFile(new File( outputDirectory, pdfFileName), osaPDF);
-//                log.info("OSA HTML Report Can Be Found in: " + outputDirectory +  "\\" + htmlFileName);
-//                log.info("OSA PDF Report Can Be Found in: " + outputDirectory +  "\\" + pdfFileName);
-//            }
+            if(osaEnabled) {
+                log.info("Waiting for OSA Scan to Finish");
+                cxClientService.waitForOSAScanToFinish(osaScan.getScanId(), -1, new OSAConsoleScanWaitHandler());
+                log.info("OSA Scan Finished Successfully");
+                log.info("Creating OSA Reports");
+                osaSummaryResults = cxClientService.retrieveOSAScanSummaryResults(createScanResponse.getProjectId());
+                printOSAResultsToConsole(osaSummaryResults);
+
+                String now = DateFormatUtils.format(new Date(), "dd_MM_yyyy-HH_mm_ss");
+                if(osaGeneratePDFReport) {
+                    byte[] osaPDF  = cxClientService.retrieveOSAScanPDFResults(createScanResponse.getProjectId());
+                    String pdfFileName = OSA_REPORT_NAME + "_" + now + ".pdf";
+                    FileUtils.writeByteArrayToFile(new File( outputDirectory, pdfFileName), osaPDF);
+                    log.info("OSA PDF Report Can Be Found in: " + outputDirectory +  "\\" + pdfFileName);
+
+                }
+
+                if(osaGenerateHTMLReport) {
+                    String osaHtml = cxClientService.retrieveOSAScanHtmlResults(createScanResponse.getProjectId());
+                    String htmlFileName = OSA_REPORT_NAME + "_" + now + ".html";
+                    FileUtils.writeStringToFile(new File( outputDirectory, htmlFileName), osaHtml, Charset.defaultCharset());
+                    log.info("OSA HTML Report Can Be Found in: " + outputDirectory +  "\\" + htmlFileName);
+                }
+            }
+
+
 
         } catch (CxClientException e) {
             log.debug("Caught Exception: ", e);
@@ -258,8 +292,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         }
 
         //assert vulnerabilities under threshold
-        assertVulnerabilities(scanResults);
-
+        assertVulnerabilities(scanResults, osaSummaryResults);
     }
 
     private void printConfiguration() {
@@ -273,13 +306,21 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         log.info("folderExclusions: " + folderExclusions);
         log.info("fileExclusions: " + fileExclusions);
         log.info("isSynchronous: " + isSynchronous);
-        log.info("runOSAScan: " + runOSAScan);
         log.info("generatePDFReport: " + generatePDFReport);
         log.info("highSeveritiesThreshold: " + (highSeveritiesThreshold < 0 ? "[No Threshold]" : highSeveritiesThreshold));
         log.info("mediumSeveritiesThreshold: " + (mediumSeveritiesThreshold < 0 ? "[No Threshold]" : mediumSeveritiesThreshold));
         log.info("lowSeveritiesThreshold: " + (lowSeveritiesThreshold < 0 ? "[No Threshold]" : lowSeveritiesThreshold));
         log.info("scanTimeoutInMinuets: " + scanTimeoutInMinuets);
         log.info("outputDirectory: " + outputDirectory);
+        log.info("osaEnabled: " + osaEnabled);
+        if(osaEnabled) {
+            log.info("osaExclusions: " + Arrays.toString(osaExclusions));
+            log.info("osaHighSeveritiesThreshold: " + (osaHighSeveritiesThreshold < 0 ? "[No Threshold]" : osaHighSeveritiesThreshold));
+            log.info("osaMediumSeveritiesThreshold: " + (osaMediumSeveritiesThreshold < 0 ? "[No Threshold]" : osaMediumSeveritiesThreshold));
+            log.info("osaLowSeveritiesThreshold: " + (osaLowSeveritiesThreshold < 0 ? "[No Threshold]" : osaLowSeveritiesThreshold));
+            log.info("osaGeneratePDFReport: " + osaGeneratePDFReport);
+            log.info("osaGenerateHTMLReport: " + osaGenerateHTMLReport);
+        }
         log.info("------------------------------------------------------------------------");
 
     }
@@ -294,14 +335,17 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         log.info("------------------------------------------------------------------------");
     }
 
-//    private void printOSAResultsToConsole(OSASummaryResults scanResults) {
-//        log.info("----------------------------OSA Scan Results:-------------------------------");
-//        log.info("High Severity Results: " +scanResults.getHighVulnerabilities());
-//        log.info("Medium Severity Results: " +scanResults.getMediumVulnerabilities());
-//        log.info("Low Severity Results: " +scanResults.getLowVulnerabilities());
-//        log.info("Score: " +scanResults.getVulnerabilityScore());
-//        log.info("------------------------------------------------------------------------");
-//    }
+
+    private void printOSAResultsToConsole(OSASummaryResults osaSummaryResults) {
+        log.info("----------------------------OSA Results:-------------------------------");
+        log.info("High Severity Results: " + osaSummaryResults.getHighVulnerabilities());
+        log.info("Medium Severity Results: " + osaSummaryResults.getMediumVulnerabilities());
+        log.info("Low Severity Results: " + osaSummaryResults.getLowVulnerabilities());
+        log.info("Vulnerability Score: " +osaSummaryResults.getVulnerabilityScore());
+        log.info("Non Vulnerable Libraries: " + osaSummaryResults.getNonVulnerableLibraries());
+        log.info("OSA Scan Results Can Be Found at: " + projectStateLink.replace("Summary", "OSA"));
+        log.info("------------------------------------------------------------------------");
+    }
 
 
 
@@ -348,7 +392,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
     }
 
-    private void assertVulnerabilities(ScanResults scanResults) throws MojoFailureException {
+    private void assertVulnerabilities(ScanResults scanResults, OSASummaryResults osaSummaryResults) throws MojoFailureException {
 
         StringBuilder res = new StringBuilder("\n");
         boolean fail = false;
@@ -366,6 +410,23 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         if(lowSeveritiesThreshold >= 0 && scanResults.getLowSeverityResults() > lowSeveritiesThreshold) {
             res.append("Low Severity Results are Above Threshold. Results: ").append(scanResults.getLowSeverityResults()).append(". Threshold: ").append(lowSeveritiesThreshold).append("\n");
             fail = true;
+        }
+
+        if(osaEnabled && osaSummaryResults != null) {
+            if(osaHighSeveritiesThreshold >= 0 && osaSummaryResults.getHighVulnerabilities() > osaHighSeveritiesThreshold) {
+                res.append("OSA High Severity Results are Above Threshold. Results: ").append(osaSummaryResults.getHighVulnerabilities()).append(". Threshold: ").append(osaHighSeveritiesThreshold).append("\n");
+                fail = true;
+            }
+
+            if(osaMediumSeveritiesThreshold >= 0 && osaSummaryResults.getMediumVulnerabilities() > osaMediumSeveritiesThreshold) {
+                res.append("OSA Medium Severity Results are Above Threshold. Results: ").append(osaSummaryResults.getMediumVulnerabilities()).append(". Threshold: ").append(osaMediumSeveritiesThreshold).append("\n");
+                fail = true;
+            }
+
+            if(osaLowSeveritiesThreshold >= 0 && osaSummaryResults.getLowVulnerabilities() > osaLowSeveritiesThreshold) {
+                res.append("OSA Low Severity Results are Above Threshold. Results: ").append(osaSummaryResults.getLowVulnerabilities()).append(". Threshold: ").append(osaLowSeveritiesThreshold).append("\n");
+                fail = true;
+            }
         }
 
         if(fail) {
@@ -476,7 +537,9 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         Set artifacts = project.getArtifacts();
         for (Object arti :artifacts) {
             Artifact a = (Artifact)arti;
-            zipArchiver.addFile(a.getFile(), a.getFile().getName());
+            if(!isExcludedFromOSA(a)) {
+                zipArchiver.addFile(a.getFile(), a.getFile().getName());
+            }
         }
 
         File ret = new File(outputDirectory, OSA_ZIP_NAME + ".zip");
@@ -490,6 +553,15 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
         return ret;
 
+    }
+
+    private boolean isExcludedFromOSA(Artifact a) {
+        for (String s : osaExclusions) {
+            if(s.equals(a.getArtifactId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
 

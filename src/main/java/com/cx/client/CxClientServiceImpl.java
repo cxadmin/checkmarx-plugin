@@ -139,23 +139,25 @@ public class CxClientServiceImpl implements CxClientService {
                 if(conf.isFailPresetNotFound()) {
                     throw new CxClientException("preset: ["+conf.getPreset()+"], not found");
                 } else {
+                    conf.setPresetId(36); // Checkmarx Default
                     log.warn("preset ["+conf.getPreset()+"] not found. preset set to default.");
                 }
             }
         }
 
+        //to assign team path to project, prepend the team path to project name. so the below is commented out
         //resolve preset
-        if(conf.getFullTeamPath() != null) {
-            String groupId = resolveGroupIdFromTeamPath(conf.getFullTeamPath());
-            conf.setGroupId(groupId);
-            if(groupId == null){
-                if(conf.isFailTeamNotFound()) {
-                    throw new CxClientException("team: ["+conf.getFullTeamPath()+"], not found");
-                } else {
-                    log.warn("team ["+conf.getFullTeamPath()+"] not found. team set to default.");
-                }
-            }
-        }
+//        if(conf.getFullTeamPath() != null) {
+//            String groupId = resolveGroupIdFromTeamPath(conf.getFullTeamPath());
+//            conf.setGroupId(groupId);
+//            if(groupId == null){
+//                if(conf.isFailTeamNotFound()) {
+//                    throw new CxClientException("team: ["+conf.getFullTeamPath()+"], not found");
+//                } else {
+//                    log.warn("team ["+conf.getFullTeamPath()+"] not found. team set to default.");
+//                }
+//            }
+//        }
 
         return createLocalScan(conf);
     }
