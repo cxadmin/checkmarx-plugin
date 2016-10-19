@@ -40,6 +40,7 @@ public class CxClientServiceImpl implements CxClientService {
     private static URL WSDL_LOCATION = CxSDKWebService.class.getClassLoader().getResource("WEB-INF/CxSDKWebService.wsdl");
     private static String CHECKMARX_SERVER_WAS_NOT_FOUND_ON_THE_SPECIFIED_ADDRESS = "Checkmarx server was not found on the specified address";
     private static String SDK_PATH = "/cxwebinterface/sdk/CxSDKWebService.asmx";
+    public static final String DEFAULT_PRESET_NAME = "Checkmarx Default";
 
     private static int generateReportTimeOutInSec = 500;
     private static int waitForScanToFinishRetry = 5;
@@ -133,14 +134,20 @@ public class CxClientServiceImpl implements CxClientService {
 
         //resolve preset
         if(conf.getPreset() != null) {
-            long presetId = resolvePresetIdFromName(conf.getPreset());
-            conf.setPresetId(presetId);
-            if(presetId == 0) {
-                if(conf.isFailPresetNotFound()) {
-                    throw new CxClientException("preset: ["+conf.getPreset()+"], not found");
-                } else {
-                    conf.setPresetId(36); // Checkmarx Default
-                    log.warn("preset ["+conf.getPreset()+"] not found. preset set to default.");
+
+            long defaultPresetId = resolvePresetIdFromName(DEFAULT_PRESET_NAME);
+            if(DEFAULT_PRESET_NAME.equalsIgnoreCase(conf.getPreset())) {
+                conf.setPresetId(defaultPresetId);
+            } else {
+                long presetId = resolvePresetIdFromName(conf.getPreset());
+                conf.setPresetId(presetId);
+                if(presetId == 0) {
+                    if(conf.isFailPresetNotFound()) {
+                        throw new CxClientException("preset: ["+conf.getPreset()+"], not found");
+                    } else {
+                        conf.setPresetId(defaultPresetId);
+                        log.warn("preset ["+conf.getPreset()+"] not found. preset set to default.");
+                    }
                 }
             }
         }
