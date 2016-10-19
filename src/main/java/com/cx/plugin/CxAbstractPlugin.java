@@ -336,6 +336,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
     private void printOSAResultsToConsole(OSASummaryResults osaSummaryResults) {
         log.info("----------------------------OSA Results:-------------------------------");
+        log.info("");
         log.info("------------------------");
         log.info("Vulnerabilities Summary:");
         log.info("------------------------");
@@ -351,6 +352,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         log.info("Vulnerable And Outdated: " + osaSummaryResults.getVulnerableAndOutdated());
         log.info("Vulnerable And Updated: " + osaSummaryResults.getVulnerableAndUpdated());
         log.info("Non Vulnerable Libraries: " + osaSummaryResults.getNonVulnerableLibraries());
+        log.info("");
         log.info("OSA Scan Results Can Be Found at: " + projectStateLink.replace("Summary", "OSA"));
         log.info("------------------------------------------------------------------------");
     }
