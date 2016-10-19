@@ -411,7 +411,7 @@ public class CxClientServiceImpl implements CxClientService {
 
             if(OSAScanStatusEnum.FAILED.equals(status)) {
                 waitHandler.onFail(scanStatus);
-                throw new CxClientException("OSA scan cannot be completed. status ["+status.uiValue()+"].");
+                throw new CxClientException("OSA scan cannot be completed. status: ["+status.uiValue()+"]. message: ["+StringUtils.defaultString(scanStatus.getMessage())+"]");
             }
 
 
