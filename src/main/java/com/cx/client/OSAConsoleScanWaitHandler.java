@@ -26,7 +26,7 @@ public class OSAConsoleScanWaitHandler implements ScanWaitHandler<OSAScanStatus>
     }
 
     public void onFail(OSAScanStatus scanStatus) throws CxClientException {
-        throw new CxClientException("OSA scan cannot be completed. status ["+scanStatus.getStatus().uiValue()+"].");
+        throw new CxClientException("OSA scan cannot be completed. status ["+scanStatus.getStatus().uiValue()+"]. message: ["+StringUtils.defaultString(scanStatus.getMessage())+"]" );
 
     }
 

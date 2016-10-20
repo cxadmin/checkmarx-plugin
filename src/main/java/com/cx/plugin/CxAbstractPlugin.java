@@ -545,7 +545,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         for (Object arti : artifacts) {
             Artifact a = (Artifact) arti;
             if (!isExcludedFromOSA(a)) {
-                zipArchiver.addFile(a.getFile(), a.getFile().getName());
+                zipArchiver.addFile(a.getFile(), a.getGroupId() + "." + a.getFile().getName());
             }
         }
 
@@ -563,8 +563,8 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     }
 
     private boolean isExcludedFromOSA(Artifact a) {
-        for (String s : osaExclusions) {
-            if (s.equals(a.getGroupId() + '.' + a.getArtifactId())) {
+        for (String exclusion : osaExclusions) {
+            if ((a.getGroupId() + '.' + a.getArtifactId()).equals(exclusion)) {
                 return true;
             }
         }
