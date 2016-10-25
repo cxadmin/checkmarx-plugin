@@ -294,8 +294,8 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         log.info("fullTeamPath: " + fullTeamPath);
         log.info("preset: " + preset);
         log.info("isIncrementalScan: " + isIncrementalScan);
-        log.info("folderExclusions: " + folderExclusions);
-        log.info("fileExclusions: " + fileExclusions);
+        log.info("folderExclusions: " +  Arrays.toString(folderExclusions));
+        log.info("fileExclusions: " +  Arrays.toString(fileExclusions));
         log.info("isSynchronous: " + isSynchronous);
         log.info("generatePDFReport: " + generatePDFReport);
         log.info("highSeveritiesThreshold: " + (highSeveritiesThreshold < 0 ? "[No Threshold]" : highSeveritiesThreshold));
