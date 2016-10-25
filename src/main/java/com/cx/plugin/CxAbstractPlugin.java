@@ -36,60 +36,56 @@ import java.util.Set;
  */
 public abstract class CxAbstractPlugin extends AbstractMojo {
 
+    public static final String SOURCES_ZIP_NAME = "sources";
+    public static final String OSA_ZIP_NAME = "OSAScan";
+    public static final String PDF_REPORT_NAME = "CxReport";
+    public static final String OSA_REPORT_NAME = "OSA_Report";
+    private static Logger log = LoggerFactory.getLogger(CxAbstractPlugin.class);
     /**
      * The username of the user running the scan.
      */
     @Parameter(required = true, property = "cx.username")
     protected String username;
-
     /**
      * The password of the user running the scan.
      */
     @Parameter(required = true, property = "cx.password")
     protected String password;
-
     /**
      * Host name of the Checkmarx application.
      */
     @Parameter(defaultValue = "http://localhost", property = "cx.url")
     protected URL url;
-
     /**
      * The name of the project being scanned.
      */
     @Parameter(defaultValue = "${project.name}", property = "cx.projectName")
     protected String projectName;
-
     /**
      * The full path describing the team the scan belongs to.
      */
     @Parameter(property = "cx.fullTeamPath", defaultValue = "CxServer")
     protected String fullTeamPath;
-
     /**
      * Configure this field to scan the project with one of the predefined scan presets, or one of your custom presets.
      */
     @Parameter(defaultValue = "Checkmarx Default", property = "cx.preset")
     protected String preset;
-
     /**
      * If true, an incremental scan will be performed, meaning - only modified files will be scanned.
      */
     @Parameter(defaultValue = "true", property = "cx.isIncrementalScan")
     protected boolean isIncrementalScan;
-
     /**
      * Configure this field if you want the scan to skip certain folders.
      */
     @Parameter(property = "cx.folderExclusions")
-    protected String folderExclusions;
-
+    protected String[] folderExclusions = new String[0];
     /**
      * Configure this field if you want the scan to skip certain files.
      */
     @Parameter(property = "cx.fileExclusions")
-    protected String fileExclusions;
-
+    protected String[] fileExclusions = new String[0];
     /**
      * If true, a synchronous scan will be performed - the scan will run until finished, and produce a results page.
      * If false, the scan will be asynchronous - the scan will run in the background,
@@ -97,13 +93,11 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
      */
     @Parameter(defaultValue = "true", property = "cx.isSynchronous")
     protected boolean isSynchronous;
-
     /**
      * If true, a PDF results page will be generated.
      */
     @Parameter(defaultValue = "true", property = "cx.generatePDFReport")
     protected boolean generatePDFReport;
-
     /**
      * Configure a threshold for the High Severity Vulnerabilities.
      * The scan will not fail if lower sum of High Severity Vulnerabilities is found.
@@ -111,7 +105,6 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
      */
     @Parameter(defaultValue = "-1", property = "cx.highSeveritiesThreshold")
     protected int highSeveritiesThreshold;
-
     /**
      * Configure a threshold for the Medium Severity Vulnerabilities.
      * The scan will not fail if lower sum of Medium Severity Vulnerabilities is found.
@@ -119,7 +112,6 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
      */
     @Parameter(defaultValue = "-1", property = "cx.mediumSeveritiesThreshold")
     protected int mediumSeveritiesThreshold;
-
     /**
      * Configure a threshold for the Low Severity Vulnerabilities.
      * The scan will not fail if lower sum of Low Severity Vulnerabilities is found.
@@ -127,65 +119,40 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
      */
     @Parameter(defaultValue = "-1", property = "cx.lowSeveritiesThreshold")
     protected int lowSeveritiesThreshold;
-
     /**
      * Define a timeout (in minutes) for the scan. If the specified time has passed, the build is failed.
      * Set to 0 to run the scan with no time limit.
      */
     @Parameter(defaultValue = "0", property = "cx.scanTimeoutInMinuets")
     protected int scanTimeoutInMinuets;
-
     @Parameter(defaultValue = "false", property = "cx.osaEnabled")
     protected boolean osaEnabled;
-
     @Parameter(property = "cx.osaExclusions")
     protected String[] osaExclusions = new String[0];
-
     @Parameter(defaultValue = "-1", property = "cx.osaHighSeveritiesThreshold")
     protected int osaHighSeveritiesThreshold;
-
     @Parameter(defaultValue = "-1", property = "cx.osaMediumSeveritiesThreshold")
     protected int osaMediumSeveritiesThreshold;
-
     @Parameter(defaultValue = "-1", property = "cx.osaLowSeveritiesThreshold")
     protected int osaLowSeveritiesThreshold;
-
     @Parameter(defaultValue = "true", property = "cx.osaGeneratePDFReport")
     protected boolean osaGeneratePDFReport;
-
     @Parameter(defaultValue = "true", property = "cx.osaGenerateHTMLReport")
     protected boolean osaGenerateHTMLReport;
-
-
     /**
      * Define an output directory for the scan results.
      */
     @Parameter(defaultValue = "${project.build.directory}\\checkmarx", property = "cx.outputDirectory")
     protected File outputDirectory;
-
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     protected MavenProject project;
-
     @Parameter(defaultValue = "${reactorProjects}", readonly = true)
     protected List<MavenProject> reactorProjects;
-
-
     @Component(role = Archiver.class, hint = "zip")
     protected ZipArchiver zipArchiver;
-
-    public static final String SOURCES_ZIP_NAME = "sources";
-    public static final String OSA_ZIP_NAME = "OSAScan";
-    public static final String PDF_REPORT_NAME = "CxReport";
-    public static final String OSA_REPORT_NAME = "OSA_Report";
-
     protected CxClientService cxClientService;
-
     protected String scanResultsUrl;
     protected String projectStateLink;
-
-
-    private static Logger log = LoggerFactory.getLogger(CxAbstractPlugin.class);
-
 
     public void execute() throws MojoExecutionException, MojoFailureException {
         MavenLoggerAdapter.setLogger(getLog());
@@ -389,8 +356,8 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         LocalScanConfiguration ret = new LocalScanConfiguration();
         ret.setProjectName(projectName);
         ret.setClientOrigin(ClientOrigin.MAVEN);
-        ret.setFileExclusions(fileExclusions);
-        ret.setFolderExclusions(folderExclusions);
+        ret.setFileExclusions(CxPluginHelper.convertArrayToString(fileExclusions));
+        ret.setFolderExclusions(CxPluginHelper.convertArrayToString(folderExclusions));
         ret.setFullTeamPath(fullTeamPath);
         ret.setIncrementalScan(isIncrementalScan);
         ret.setPreset(preset);

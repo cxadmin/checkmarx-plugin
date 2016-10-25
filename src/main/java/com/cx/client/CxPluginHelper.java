@@ -17,10 +17,8 @@ import java.nio.charset.Charset;
  */
 public abstract class CxPluginHelper {
 
-    private static final Logger log = LoggerFactory.getLogger(CxPluginHelper.class);
-
     public static final String HTML_TEMPLATE_LOCATION = "com/cx/plugin/htmlReportTemplate.html";
-
+    private static final Logger log = LoggerFactory.getLogger(CxPluginHelper.class);
 
     public static ScanResults genScanResponse(ProjectScannedDisplayData scanDisplayData) {
         ScanResults ret = new ScanResults();
@@ -89,6 +87,10 @@ public abstract class CxPluginHelper {
 
     public static String composeProjectStateLink(String url, long projectId) {
         return String.format( url + "/CxWebClient/portal#/projectState/%s/Summary", projectId);
+    }
+
+    public static String convertArrayToString(String[] array){
+        return StringUtils.join(array, ',');
     }
 
 }
