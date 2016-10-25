@@ -156,8 +156,11 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
     public void execute() throws MojoExecutionException, MojoFailureException {
         MavenLoggerAdapter.setLogger(getLog());
-        ScanResults scanResults;
+        ScanResults scanResults = null;
         OSASummaryResults osaSummaryResults = null;
+
+        Exception osaCreateException = null;
+        Exception scanWaitException = null;
 
         if (shouldSkip()) {
             log.info("Project Has No Sources (Reactor), Skipping");
@@ -189,39 +192,58 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
             CreateOSAScanResponse osaScan = null;
             if (osaEnabled) {
-                log.info("creating OSA scan");
-                log.info("zipping dependencies");
-                File zipForOSA = createZipForOSA();
-                log.info("sending OSA scan request");
-                osaScan = cxClientService.createOSAScan(createScanResponse.getProjectId(), zipForOSA);
-                log.info("OSA scan created successfully");
+                try {
+                    log.info("creating OSA scan");
+                    log.info("zipping dependencies");
+                    File zipForOSA = createZipForOSA();
+                    log.info("sending OSA scan request");
+                    osaScan = cxClientService.createOSAScan(createScanResponse.getProjectId(), zipForOSA);
+                    log.info("OSA scan created successfully");
+                } catch (Exception e) {
+                    osaCreateException = e;
+                }
+
             }
 
             if (!isSynchronous) {
+                if(osaCreateException != null) {
+                    throw osaCreateException;
+                }
                 log.info("Running in Asynchronous Mode. Not Waiting for Scan to Finish");
                 return;
             }
 
-            //wait for scan to finish
-            log.info("Waiting For Scan To Finish.");
-            cxClientService.waitForScanToFinish(createScanResponse.getRunId(), scanTimeoutInMinuets, new ConsoleScanWaitHandler());
+            //wait for sast scan to finish
+            try {
+                log.info("Waiting For Scan To Finish.");
+                cxClientService.waitForScanToFinish(createScanResponse.getRunId(), scanTimeoutInMinuets, new ConsoleScanWaitHandler());
 
-            log.info("Scan Finished. Retrieving Scan Results");
-            scanResults = cxClientService.retrieveScanResults(createScanResponse.getProjectId());
+                log.info("Scan Finished. Retrieving Scan Results");
+                scanResults = cxClientService.retrieveScanResults(createScanResponse.getProjectId());
 
-            scanResultsUrl = CxPluginHelper.composeScanLink(url.toString(), scanResults);
+                scanResultsUrl = CxPluginHelper.composeScanLink(url.toString(), scanResults);
 
-            printResultsToConsole(scanResults);
+                printResultsToConsole(scanResults);
 
-/*            log.info("Generating HTML Report");
-            generateHTMLReport(scanResults.getScanID());*/
+    /*            log.info("Generating HTML Report");
+                generateHTMLReport(scanResults.getScanID());*/
 
-            //create scan report
-            if (generatePDFReport) {
-                createPDFReport(scanResults.getScanID());
+                //create scan report
+                if (generatePDFReport) {
+                    createPDFReport(scanResults.getScanID());
+                }
+
+            } catch (Exception e) {
+                scanWaitException = e;
             }
 
             if (osaEnabled) {
+
+                if(osaCreateException != null) {
+                    throw osaCreateException;
+                }
+
+
                 log.info("Waiting for OSA Scan to Finish");
                 cxClientService.waitForOSAScanToFinish(osaScan.getScanId(), -1, new OSAConsoleScanWaitHandler());
                 log.info("OSA Scan Finished Successfully");
@@ -235,7 +257,6 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
                     String pdfFileName = OSA_REPORT_NAME + "_" + now + ".pdf";
                     FileUtils.writeByteArrayToFile(new File(outputDirectory, pdfFileName), osaPDF);
                     log.info("OSA PDF Report Can Be Found in: " + outputDirectory + "\\" + pdfFileName);
-
                 }
 
                 if (osaGenerateHTMLReport) {
@@ -244,6 +265,11 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
                     FileUtils.writeStringToFile(new File(outputDirectory, htmlFileName), osaHtml, Charset.defaultCharset());
                     log.info("OSA HTML Report Can Be Found in: " + outputDirectory + "\\" + htmlFileName);
                 }
+
+            }
+
+            if(scanWaitException != null) {
+                throw scanWaitException;
             }
 
 
