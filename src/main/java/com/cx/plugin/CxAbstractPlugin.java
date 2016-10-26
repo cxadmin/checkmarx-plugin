@@ -234,6 +234,8 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
                 }
 
             } catch (Exception e) {
+                log.error("fail to perform scan: " + e.getMessage());
+                log.debug("", e);
                 scanWaitException = e;
             }
 
@@ -443,13 +445,8 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         try {
             InputStream fileStream = new FileInputStream(new File(outputDirectory, SOURCES_ZIP_NAME + ".zip"));
             zipFileByte = IOUtils.toByteArray(fileStream);
-        } catch (FileNotFoundException e) {
-
-            throw new MojoExecutionException("Fail to Set Zipped File Into Project.", e);
-
-        } catch (IOException e) {
-
-            throw new MojoExecutionException("Fail to Set Zipped File Into Project.", e);
+        } catch (Exception e) {
+            throw new MojoExecutionException("Fail to Set Zipped File Into Project: " + e.getMessage(), e);
         }
 
         return zipFileByte;
@@ -545,10 +542,15 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         File ret = new File(outputDirectory, OSA_ZIP_NAME + ".zip");
         zipArchiver.setDestFile(ret);
         try {
-            zipArchiver.createArchive();
-            log.info("Files for OSA scan zipped at: " + outputDirectory + "\\" + OSA_ZIP_NAME + ".zip");
-        } catch (IOException e) {
-            throw new MojoExecutionException("Fail to zip files for OSA scan:", e);
+            if(zipArchiver.getFiles().isEmpty()) {
+                log.info("no dependencies found to zip.");
+                CxPluginHelper.createEmptyZip(ret);
+            } else {
+                zipArchiver.createArchive();
+                log.info("Files for OSA scan zipped at: " + outputDirectory + "\\" + OSA_ZIP_NAME + ".zip");
+            }
+        } catch (Exception e) {
+            throw new MojoExecutionException("Fail to zip files for OSA scan: " + e.getMessage(), e);
         }
 
         return ret;

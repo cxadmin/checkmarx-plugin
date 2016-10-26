@@ -1,6 +1,9 @@
 package com.cx.client;
 
-import com.checkmarx.v7.*;
+import com.checkmarx.v7.CliScanArgs;
+import com.checkmarx.v7.CxClientType;
+import com.checkmarx.v7.ProjectScannedDisplayData;
+import com.checkmarx.v7.ProjectSettings;
 import com.cx.client.dto.BaseScanConfiguration;
 import com.cx.client.dto.ScanResults;
 import org.apache.commons.io.IOUtils;
@@ -8,6 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
@@ -91,6 +96,24 @@ public abstract class CxPluginHelper {
 
     public static String convertArrayToString(String[] array){
         return StringUtils.join(array, ',');
+    }
+
+    public static void createEmptyZip(File zipFile) throws IOException {
+
+        FileOutputStream os = null;
+        try {
+            os = new FileOutputStream(zipFile);
+            byte[] ioe = new byte[22];
+            ioe[0] = 80;
+            ioe[1] = 75;
+            ioe[2] = 5;
+            ioe[3] = 6;
+            os.write(ioe);
+            os.close();
+            os = null;
+        } finally {
+            IOUtils.closeQuietly(os);
+        }
     }
 
 }
