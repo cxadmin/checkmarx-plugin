@@ -335,9 +335,9 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         log.info("------------------------");
         log.info("Vulnerabilities Summary:");
         log.info("------------------------");
-        log.info("High Severity Results: " + osaSummaryResults.getHighVulnerabilities());
-        log.info("Medium Severity Results: " + osaSummaryResults.getMediumVulnerabilities());
-        log.info("Low Severity Results: " + osaSummaryResults.getLowVulnerabilities());
+        log.info("OSA High Severity Results: " + osaSummaryResults.getHighVulnerabilities());
+        log.info("OSA Medium Severity Results: " + osaSummaryResults.getMediumVulnerabilities());
+        log.info("OSA Low Severity Results: " + osaSummaryResults.getLowVulnerabilities());
         log.info("Vulnerability Score: " + osaSummaryResults.getVulnerabilityScore());
         log.info("");
         log.info("-----------------------");
