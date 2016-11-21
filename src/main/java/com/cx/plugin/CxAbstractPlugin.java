@@ -123,8 +123,8 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
      * Define a timeout (in minutes) for the scan. If the specified time has passed, the build is failed.
      * Set to 0 to run the scan with no time limit.
      */
-    @Parameter(defaultValue = "0", property = "cx.scanTimeoutInMinuets")
-    protected int scanTimeoutInMinuets;
+    @Parameter(defaultValue = "0", property = "cx.scanTimeoutInMinutes")
+    protected int scanTimeoutInMinutes;
     @Parameter(defaultValue = "false", property = "cx.osaEnabled")
     protected boolean osaEnabled;
     @Parameter(property = "cx.osaExclusions")
@@ -216,7 +216,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
             //wait for sast scan to finish
             try {
                 log.info("Waiting For Scan To Finish.");
-                cxClientService.waitForScanToFinish(createScanResponse.getRunId(), scanTimeoutInMinuets, new ConsoleScanWaitHandler());
+                cxClientService.waitForScanToFinish(createScanResponse.getRunId(), scanTimeoutInMinutes, new ConsoleScanWaitHandler());
 
                 log.info("Scan Finished. Retrieving Scan Results");
                 scanResults = cxClientService.retrieveScanResults(createScanResponse.getProjectId());
@@ -303,7 +303,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         log.info("highSeveritiesThreshold: " + (highSeveritiesThreshold < 0 ? "[No Threshold]" : highSeveritiesThreshold));
         log.info("mediumSeveritiesThreshold: " + (mediumSeveritiesThreshold < 0 ? "[No Threshold]" : mediumSeveritiesThreshold));
         log.info("lowSeveritiesThreshold: " + (lowSeveritiesThreshold < 0 ? "[No Threshold]" : lowSeveritiesThreshold));
-        log.info("scanTimeoutInMinuets: " + scanTimeoutInMinuets);
+        log.info("scanTimeoutInMinutes: " + scanTimeoutInMinutes);
         log.info("outputDirectory: " + outputDirectory);
         log.info("osaEnabled: " + osaEnabled);
         if (osaEnabled) {
@@ -319,7 +319,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     }
 
     private void printResultsToConsole(ScanResults scanResults) {
-        log.info("----------------------------Scan Results:-------------------------------");
+        log.info("----------------------------Checkmarx Scan Results(CxSAST):-------------------------------");
         log.info("High Severity Results: " + scanResults.getHighSeverityResults());
         log.info("Medium Severity Results: " + scanResults.getMediumSeverityResults());
         log.info("Low Severity Results: " + scanResults.getLowSeverityResults());
@@ -330,7 +330,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
 
     private void printOSAResultsToConsole(OSASummaryResults osaSummaryResults) {
-        log.info("----------------------------OSA Results:-------------------------------");
+        log.info("----------------------------Checkmarx Scan Results(CxOSA):-------------------------------");
         log.info("");
         log.info("------------------------");
         log.info("Vulnerabilities Summary:");
