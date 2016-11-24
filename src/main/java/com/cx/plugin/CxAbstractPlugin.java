@@ -46,101 +46,150 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
      */
     @Parameter(required = true, property = "cx.username")
     protected String username;
+
     /**
      * The password of the user running the scan.
      */
     @Parameter(required = true, property = "cx.password")
     protected String password;
+
     /**
      * Host name of the Checkmarx application.
      */
     @Parameter(defaultValue = "http://localhost", property = "cx.url")
     protected URL url;
+
     /**
      * The name of the project being scanned.
      */
     @Parameter(defaultValue = "${project.name}", property = "cx.projectName")
     protected String projectName;
+
     /**
      * The full path describing the team the scan belongs to.
      */
     @Parameter(property = "cx.fullTeamPath", defaultValue = "CxServer")
     protected String fullTeamPath;
+
     /**
      * Configure this field to scan the project with one of the predefined scan presets, or one of your custom presets.
      */
     @Parameter(defaultValue = "Checkmarx Default", property = "cx.preset")
     protected String preset;
+
     /**
      * If true, an incremental scan will be performed, meaning - only modified files will be scanned.
      */
     @Parameter(defaultValue = "true", property = "cx.isIncrementalScan")
     protected boolean isIncrementalScan;
+
     /**
-     * Configure this field if you want the scan to skip certain folders.
+     * List of folders and\or folder patterns which the scan will ignore
      */
     @Parameter(property = "cx.folderExclusions")
     protected String[] folderExclusions = new String[0];
+
     /**
-     * Configure this field if you want the scan to skip certain files.
+     * List of files and\or file patterns which the scan will ignore.
      */
     @Parameter(property = "cx.fileExclusions")
     protected String[] fileExclusions = new String[0];
+
     /**
-     * If true, a synchronous scan will be performed - the scan will run until finished, and produce a results page.
-     * If false, the scan will be asynchronous - the scan will run in the background,
-     * and the results will appear, when finished, on the Checkmarx application.
+     * If true, the build will wait for the scan to end and display the results.
+     * If false, the build will trigger the scan without waiting for the scan to end and the results will not be displayed
      */
     @Parameter(defaultValue = "true", property = "cx.isSynchronous")
     protected boolean isSynchronous;
+
     /**
-     * If true, a PDF results page will be generated.
+     * If true, a PDF report will be generated in the output directory.
      */
     @Parameter(defaultValue = "true", property = "cx.generatePDFReport")
     protected boolean generatePDFReport;
+
     /**
      * Configure a threshold for the High Severity Vulnerabilities.
-     * The scan will not fail if lower sum of High Severity Vulnerabilities is found.
+     * The build will fail if the sum of High Severity Vulnerabilities is larger than the threshold.
      * Set to -1 to ignore threshold.
      */
     @Parameter(defaultValue = "-1", property = "cx.highSeveritiesThreshold")
     protected int highSeveritiesThreshold;
+
     /**
      * Configure a threshold for the Medium Severity Vulnerabilities.
-     * The scan will not fail if lower sum of Medium Severity Vulnerabilities is found.
+     * The build will fail if the sum of Medium Severity Vulnerabilities is larger than the threshold.
      * Set to -1 to ignore threshold.
      */
     @Parameter(defaultValue = "-1", property = "cx.mediumSeveritiesThreshold")
     protected int mediumSeveritiesThreshold;
+
     /**
      * Configure a threshold for the Low Severity Vulnerabilities.
-     * The scan will not fail if lower sum of Low Severity Vulnerabilities is found.
+     * The build will fail if the sum of Low Severity Vulnerabilities is larger than the threshold.
      * Set to -1 to ignore threshold.
      */
     @Parameter(defaultValue = "-1", property = "cx.lowSeveritiesThreshold")
     protected int lowSeveritiesThreshold;
+
     /**
-     * Define a timeout (in minutes) for the scan. If the specified time has passed, the build is failed.
+     * Define a timeout (in minutes) for the scan. If the specified time has passed, the build fails.
      * Set to 0 to run the scan with no time limit.
      */
     @Parameter(defaultValue = "0", property = "cx.scanTimeoutInMinutes")
     protected int scanTimeoutInMinutes;
+
+    /**
+     * If true, CxOSA will be enabled
+     */
     @Parameter(defaultValue = "false", property = "cx.osaEnabled")
     protected boolean osaEnabled;
+
+    /**
+     *  List of Maven dependencies that will not be included in CxOSA.
+     *  An exclusion should be of the form: groupId.artifactId
+     */
     @Parameter(property = "cx.osaExclusions")
     protected String[] osaExclusions = new String[0];
+
+    /**
+     * Configure a threshold for the CxOSA High Severity Vulnerabilities.
+     * The build will fail if the sum of High Severity Vulnerabilities is larger than the threshold.
+     * Set to -1 to ignore threshold.
+     */
     @Parameter(defaultValue = "-1", property = "cx.osaHighSeveritiesThreshold")
     protected int osaHighSeveritiesThreshold;
+
+    /**
+     * Configure a threshold for the CxOSA Medium Severity Vulnerabilities.
+     * The build will fail if the sum of Medium Severity Vulnerabilities is larger than the threshold.
+     * Set to -1 to ignore threshold.
+     */
     @Parameter(defaultValue = "-1", property = "cx.osaMediumSeveritiesThreshold")
     protected int osaMediumSeveritiesThreshold;
+
+    /**
+     * Configure a threshold for the CxOSA Low Severity Vulnerabilities.
+     * The build will fail if the sum of Low Severity Vulnerabilities is larger than the threshold.
+     * Set to -1 to ignore threshold.
+     */
     @Parameter(defaultValue = "-1", property = "cx.osaLowSeveritiesThreshold")
     protected int osaLowSeveritiesThreshold;
+
+    /**
+     * If true, a CxOSA PDF report will be generated in the output directory.
+     */
     @Parameter(defaultValue = "true", property = "cx.osaGeneratePDFReport")
     protected boolean osaGeneratePDFReport;
+
+    /**
+     * If true, a CxOSA HTML report will be generated in the output directory.
+     */
     @Parameter(defaultValue = "true", property = "cx.osaGenerateHTMLReport")
     protected boolean osaGenerateHTMLReport;
+
     /**
-     * Define an output directory for the scan results.
+     * Define an output directory for the scan reports.
      */
     @Parameter(defaultValue = "${project.build.directory}\\checkmarx", property = "cx.outputDirectory")
     protected File outputDirectory;

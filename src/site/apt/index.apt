@@ -9,11 +9,10 @@ Upcoming Features
 
 * Goals Overview
 
-  The Dependency plugin has two goals:
+  The Dependency plugin has one goal:
 
   *{{{./scan-mojo.html}checkmarx:scan}} The Scan goal creates a single comprehensive scan, including all the modules in the reactor.
 
-  *{{{./scan-foreach-mojo.html}checkmarx:scan-foreach}} The 'scan-foreach' goal creates a separate scan for each of the modules found in the reactor.
 
   []
 
