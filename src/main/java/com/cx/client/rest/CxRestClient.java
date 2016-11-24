@@ -66,7 +66,7 @@ public class CxRestClient {
                 //cookies.clear();
                 cookies.addAll(clientResponseContext.getCookies().values());
 
-                if(clientResponseContext.getCookies().get(CSRF_TOKEN_HEADER) != null) {
+                if (clientResponseContext.getCookies().get(CSRF_TOKEN_HEADER) != null) {
                     csrfToken = clientResponseContext.getCookies().get(CSRF_TOKEN_HEADER).getValue();
                 }
             }
@@ -81,7 +81,7 @@ public class CxRestClient {
                 clientRequestContext.getHeaders().put("Cookie", cookies);
             }
 
-            if(csrfToken != null) {
+            if (csrfToken != null) {
                 clientRequestContext.getHeaders().putSingle(CSRF_TOKEN_HEADER, csrfToken);
             }
         }
@@ -89,7 +89,6 @@ public class CxRestClient {
 
 
     public CxRestClient(String hostname, String username, String password) {
-
         this.username = username;
         this.password = password;
         client = ClientBuilder.newBuilder().register(clientRequestFilter).register(clientResponseFilter).register(MultiPartFeature.class).build();
@@ -114,7 +113,7 @@ public class CxRestClient {
         MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
 
-        FileDataBodyPart fileDataBodyPart = new FileDataBodyPart(OSA_ZIPPED_FILE_KEY_NAME , zipFile, MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FileDataBodyPart fileDataBodyPart = new FileDataBodyPart(OSA_ZIPPED_FILE_KEY_NAME, zipFile, MediaType.APPLICATION_OCTET_STREAM_TYPE);
         multiPart.bodyPart(fileDataBodyPart);
 
         Response response = root.path(OSA_SCAN_PROJECT_PATH).resolveTemplate("projectId", projectId).request(MediaType.APPLICATION_JSON_TYPE)
@@ -151,7 +150,7 @@ public class CxRestClient {
     }
 
     private void validateResponse(Response response, Response.Status expectedStatus, String message) throws CxClientException {
-        if(response.getStatus() != expectedStatus.getStatusCode()) {
+        if (response.getStatus() != expectedStatus.getStatusCode()) {
             throw new CxClientException(message + ": " + response.getStatusInfo().toString());
         }
     }
@@ -162,8 +161,8 @@ public class CxRestClient {
         try {
             ret = mapper.readValue(json, valueType);
         } catch (IOException e) {
-            log.debug("fail to parse json response: ["+json+"]", e);
-            throw new CxClientException("fail to parse json response: " +e.getMessage());
+            log.debug("fail to parse json response: [" + json + "]", e);
+            throw new CxClientException("fail to parse json response: " + e.getMessage());
         }
         return ret;
     }
