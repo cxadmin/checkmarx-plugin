@@ -22,7 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.impl.MavenLoggerAdapter;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -36,11 +39,12 @@ import java.util.Set;
  */
 public abstract class CxAbstractPlugin extends AbstractMojo {
 
+    private static Logger log = LoggerFactory.getLogger(CxAbstractPlugin.class);
+
     public static final String SOURCES_ZIP_NAME = "sources";
     public static final String OSA_ZIP_NAME = "OSAScan";
     public static final String PDF_REPORT_NAME = "CxReport";
     public static final String OSA_REPORT_NAME = "OSA_Report";
-    private static Logger log = LoggerFactory.getLogger(CxAbstractPlugin.class);
     /**
      * The username of the user running the scan.
      */
@@ -146,8 +150,8 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     protected boolean osaEnabled;
 
     /**
-     *  List of Maven dependencies that will not be included in CxOSA.
-     *  An exclusion should be of the form: groupId.artifactId
+     * List of Maven dependencies that will not be included in CxOSA.
+     * An exclusion should be of the form: groupId.artifactId
      */
     @Parameter(property = "cx.osaExclusions")
     protected String[] osaExclusions = new String[0];
@@ -255,7 +259,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
             }
 
             if (!isSynchronous) {
-                if(osaCreateException != null) {
+                if (osaCreateException != null) {
                     throw osaCreateException;
                 }
                 log.info("Running in Asynchronous Mode. Not Waiting for Scan to Finish");
@@ -290,7 +294,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
             if (osaEnabled) {
 
-                if(osaCreateException != null) {
+                if (osaCreateException != null) {
                     throw osaCreateException;
                 }
 
@@ -319,7 +323,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
 
             }
 
-            if(scanWaitException != null) {
+            if (scanWaitException != null) {
                 throw scanWaitException;
             }
 
@@ -345,8 +349,8 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         log.info("fullTeamPath: " + fullTeamPath);
         log.info("preset: " + preset);
         log.info("isIncrementalScan: " + isIncrementalScan);
-        log.info("folderExclusions: " +  Arrays.toString(folderExclusions));
-        log.info("fileExclusions: " +  Arrays.toString(fileExclusions));
+        log.info("folderExclusions: " + Arrays.toString(folderExclusions));
+        log.info("fileExclusions: " + Arrays.toString(fileExclusions));
         log.info("isSynchronous: " + isSynchronous);
         log.info("generatePDFReport: " + generatePDFReport);
         log.info("highSeveritiesThreshold: " + (highSeveritiesThreshold < 0 ? "[No Threshold]" : highSeveritiesThreshold));
@@ -591,7 +595,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
         File ret = new File(outputDirectory, OSA_ZIP_NAME + ".zip");
         zipArchiver.setDestFile(ret);
         try {
-            if(zipArchiver.getFiles().isEmpty()) {
+            if (zipArchiver.getFiles().isEmpty()) {
                 log.info("no dependencies found to zip.");
                 CxPluginHelper.createEmptyZip(ret);
             } else {
