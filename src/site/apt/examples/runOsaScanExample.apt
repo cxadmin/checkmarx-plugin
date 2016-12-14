@@ -1,0 +1,45 @@
+All Examples
+
+	* {{{./ignoreThresholdExample.html}Ignore Threshold}}
+
+	* {{{./runOsaScanExample.html}Run Open Source Analysis}}
+
+	[]
+
+Run OSA Scan
+
+    You can easily run an OSA scan with the regular SAST scan, by including the <<<<osaEnabled>>>> tag in the POM.xml file. \
+    Configure the OSA scan using the <<<<osa*****>>>> tag family. \
+    In order to exclude some of the dependencies from the OSA scan, use the <<<<osaExclusions>>>> tag, and fill in the <<<<groupName>>>> followed by the <<<<artifactId>>>>, separated by a dot.
+
++---+
+<project>
+    [...]
+    <build>
+        <plugins>
+            [...]
+            <plugin>
+                <groupId>com.checkmarx.maven</groupId>
+                <artifactId>checkmarx-maven-plugin</artifactId>
+                [...]
+                <configuration>
+                    <url>http://localhost</url>
+                    <username>[your username]</username>
+                    <password>[your password]</password>
+                    [...]
+                    <osaEnabled>true</osaEnabled>
+                    <osaHighSeveritiesThreshold>4</osaHighSeveritiesThreshold>
+                    <osaMediumSeveritiesThreshold>20</osaMediumSeveritiesThreshold>
+                    <osaLowSeveritiesThreshold>30</osaLowSeveritiesThreshold>
+                    <osaGeneratePDFReport>true</osaGeneratePDFReport>
+                    <osaGenerateHTMLReport>true</osaGenerateHTMLReport>
+                    <osaExclusions>
+                        <osaExclusion>org.codehaus.plexus.plexus-utils</osaExclusion>
+                    </osaExclusions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    [...]
+</project>
++---+

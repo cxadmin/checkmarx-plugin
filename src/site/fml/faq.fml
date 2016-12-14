@@ -1,73 +1,137 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <faqs xmlns="http://maven.apache.org/FML/1.0.1"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/FML/1.0.1 http://maven.apache.org/xsd/fml-1.0.1.xsd"
-  id="FAQ" title="Frequently Asked Questions">
- <part id="General">
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://maven.apache.org/FML/1.0.1 http://maven.apache.org/xsd/fml-1.0.1.xsd"
+      id="FAQ" title="Frequently Asked Questions">
+    <part id="General">
 
-   <faq id="what is checkmarx maven plugin">
-     <question>What is the Checkmarx Maven Plugin exactly?</question>
-     <answer>
-       <p>
-         The Checkmarx Maven Plugin is a reliable and easy to use plugin for the Apache Maven tool.
-       </p>
-       <p>
-         The plugin allows you to run the Checkmarx static application security test (SAST),
-         as a stand-alone scan, or as part of any of the Maven life-cycles.
-       </p>
-     </answer>
-   </faq>
+        <faq id="what is checkmarx maven plugin">
+            <question>What exactly is Checkmarx's CxSAST Maven Plugin?</question>
+            <answer>
+                <p>
+                    The Checkmarx Maven Plugin is a reliable and easy to use plugin for the Apache Maven tool.
+                </p>
+                <p>
+                    The plugin allows you to run the Checkmarx Static Application Security Test (SAST), as a stand-alone
+                    scan, or as part of any of the Maven life-cycle.
+                </p>
+            </answer>
+        </faq>
 
-   <faq id="how to use">
-     <question>
-       How can I use the Checkmarx Maven Plugin in my projects?
-     </question>
-     <answer>
-       <p>
-         Use can read about the usage and configuration of the plugin in the <a href="usage.html">Usage</a>
-       </p>
-       <p>
-         and <a href="examples/example1.html">Examples</a> sections of this document.
-       </p>
-     </answer>
-    </faq>
+        <faq id="any dependencies">
+            <question>Do I need anything pre-installed before using Checkmarx's CxSAST Maven Plugin?</question>
+            <answer>
+                <p>
+                    First and foremost, you will need to install
+                    <a class="nothing" href="https://maven.apache.org/download.cgi">Maven</a>
+                </p>
+                <p>
+                    After installing Maven, you will need to install
+                    <a class="nothing" href="https://www.checkmarx.com/downloads/">Checkmarx's CxSAST Application</a>
+                </p>
+            </answer>
+        </faq>
 
-    <faq id="missing">
-      <question>Why am I getting errors that a documented goal or parameter is missing?</question>
-      <answer><p>The latest documents are published and may preceed the actual release. Check to make sure the goal/parameter is in the most recent version.
-        <b> -OR- </b>
-        Maven may be resolving the older codehaus version of the dependency plugin. See next question.</p>
-      </answer>
-    </faq>
-    <faq id="question">
-      <question>Why is Maven resolving "dependency:xxx" to the older org.codehaus.mojo:dependency-maven-plugin?</question>
-      <answer><p>
-        Due to a bug in Maven in versions prior to 2.0.7 (<a href="http://jira.codehaus.org/browse/MNG-2926">MNG-2926</a>), the search order was reversed and caused Mojo plugins to supercede ones with the same prefix at Apache.
-        The metadata at Mojo was cleaned up when the maven-dependency-plugin was released at Apache. If you are still experiencing this error, chances are you have
-        old metadata in your local repository or in a proxy / internal repository. Removing <code>/org/codehaus/mojo/maven-metadata.*</code> from your repo/proxy will cause it to
-        be refreshed. Alternatively, you can specify the groupId explicitely in your pom (if you are using a bound goal), or on the command line, use groupId:artifactId:version:mojo, ie
-        <code>mvn org.apache.maven.plugins:maven-dependency-plugin:2.5:unpack</code>
-      </p>
-      </answer>
-    </faq>
-    <faq id="includes">
-      <question>Why am I having trouble unpacking only a specific file?</question>
-      <answer><p>
-        The excludes will override the includes declaration. That means if you specify excludes=**/* ,includes=**/foo,
-        you will exclude everything. If you only want foo, then just specify the includes. The plexus component used to
-        unpack uses the following code to determine which files to unpack: <code>return isIncluded( name ) AND !isExcluded( name );</code>
-        </p>
-      </answer>
-    </faq>
-    <faq id="unused">
-      <question>Why does my dependency analysis report <code>Unused declared dependencies</code>?</question>
-      <answer><p>
-        By default, dependency analysis is done at bytecode level: anything that doesn't get into bytecode isn't detected.
-        This is the case, for example, of constants, annotations with source retention policy, or javadoc links.</p>
-        <p>If the only use of a dependency consists of such undetected constructs, the dependency is analyzed
-        as unused. Since 2.6, you can force use report with <code>usedDependencies</code> parameter.</p>
-      </answer>
-    </faq>
-  </part>
+        <faq id="how to use">
+            <question>
+                How can I use the Checkmarx Maven Plugin in my projects?
+            </question>
+            <answer>
+                <p>
+                    Use can read about the usage and configuration of the plugin in the
+                    <a href="usage.html">Usage</a>
+                    and Examples sections of this document.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="revealed password">
+            <question>Isn't writing my personal password in the POM file risky?</question>
+            <answer>
+                <p>
+                    It is not very smart to use your password hardcoded into the POM file. We suggest using a password
+                    parameter.
+                </p>
+                <p>
+                    Pass this argument via command line:
+                </p>
+                <pre>$ mvn checkmarx:scan -Dcx.password=[your password]</pre>
+            </answer>
+        </faq>
+
+        <faq id="no permissions for default path">
+            <question>Why do I get a 'No Permissions' error message when I try to run a scan?</question>
+            <answer>
+                <p>Did you remember to define the
+                    <tt>&lt;fullTeamPath&gt;</tt>
+                    field in the pom.xml file?
+                </p>
+                <p>When not defined, the default team path is used (CxServer), and most users don't have permissions to
+                    run scans on this path.
+                </p>
+            </answer>
+        </faq>
+
+        <faq id="view exclusions">
+            <question>How do I exclude some of the project's files or foldres from the scan?</question>
+            <answer>
+                <ul>
+                    <li>
+                        <p>In order to Exclude files from scanning, just write the files names as a comma separated list
+                            in the
+                            <tt>&lt;fileExclusions&gt;</tt>
+                            tag like so:
+                        </p>
+                        <pre>
+    &lt;fileExclusions&gt;
+        &lt;fileExclusion&gt;file_1&lt;/fileExclusion&gt;
+        &lt;fileExclusion&gt;file_2&lt;/fileExclusion&gt;
+        &lt;fileExclusion&gt;file_3&lt;/fileExclusion&gt;
+    &lt;/fileExclusions&gt;</pre>
+
+                    </li>
+                    <li>
+                        <p>To exclude folders, you have to write the
+                            <b>module names</b>
+                            (not the actual folder names!), as they appear in each folder's pom.xml file
+                            <tt>&lt;artifactId&gt;</tt>
+                            tag, in the
+                            <tt>&lt;excludeFolders&gt;</tt>
+                            tag:
+                        </p>
+                        <pre>
+    &lt;folderExclusions&gt;
+        &lt;folderExclusion&gt;folder_1&lt;/folderExclusion&gt;
+        &lt;folderExclusion&gt;folder_2&lt;/folderExclusion&gt;
+        &lt;folderExclusion&gt;folder_3&lt;/folderExclusion&gt;
+    &lt;/folderExclusions&gt;</pre>
+                    </li>
+                    <li>
+                        <p>To exclude artifacts from the OSA, set the
+                            <tt>&lt;osaExclusions&gt;</tt>
+                            parameter with the list of exclusions like groupId.artifactId
+                        </p>
+                        <p>for example: to exclude
+                            <pre>
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.apache.commons&lt;/groupId&gt;
+        &lt;artifactId&gt;commons-io&lt;/artifactId&gt;
+        &lt;version&gt;6.6.9&lt;/version&gt;
+    &lt;/dependency&gt;</pre>
+                        </p>
+
+                        <p>write: </p>
+                        <pre>
+    &lt;osaExclusions&gt;
+        &lt;exclusion&gt;groupId1.artifactId1&lt;/exclusion&gt;
+        &lt;exclusion&gt;groupId2.artifactId2&lt;/exclusion&gt;
+        &lt;exclusion&gt;org.apache.commons.commons-io&lt;/exclusion&gt;
+    &lt;/osaExclusions&gt;</pre>
+                    </li>
+                </ul>
+            </answer>
+        </faq>
+
+    </part>
 </faqs>

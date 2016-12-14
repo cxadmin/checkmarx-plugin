@@ -1,11 +1,8 @@
-Checkmarx Maven Plugin
+The CxSAST Maven Plugin
 
-	The Checkmarx Maven Plugin allows you to run the Checkmarx static application security test (SAST), \
-	as a stand-alone scan, or as part of any of the Maven life-cycles.
+	CxSAST is a security solution provided by Checkmarx that scans application source code for vulnerabilities.\
+	The CxSAST Maven plugin allows Maven based projects to automatically perform a static application security test (SAST) with CxSAST.
 
-Upcoming Features
-	
-	An Open Source Analysis (OSA) will be available soon.
 
 * Goals Overview
 
@@ -18,17 +15,83 @@ Upcoming Features
 
 * Usage
 
-  General instructions on how to use the Checkmarx Plugin can be found on the {{{./usage.html}usage page}}. Some more
-  specific use cases are described in the examples given below. 
-
+  The CxSAST plug-in for Maven is simple to install and configure. \
+  General instructions on how to use the CxSAST Maven Plugin can be found on the {{{./usage.html}usage page}}. \
   In case you still have questions regarding the plugin's usage, please have a look at the {{{./faq.html}FAQ}}.
+
 
 * Examples
 
+    To provide you with better understanding of some usages of the CxSAST Maven Plugin, you can take a look at the following examples:
+
+
+
+    <<Basic Configuration (default)>>
+
+    The basic default configuration of the Maven Plugin runs the scan with no vulnerability thresholds defined.
+
++---+
+<build>
+        [...]
+        <plugins>
+                [...]
+            <plugin>
+                <groupId>com.checkmarx.maven</groupId>
+                <artifactId>checkmarx-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <configuration>
+                    <url>[Your Checkmarx app url]</url>
+                    <username>username</username>
+                    <password>password</password>
+                </configuration>
+            </plugin>
+            [...]
+        </plugins>
+    [...]
+</build>
++---+
+
+    <<Full Configuration>>
+
+    In order to configure the scan to your needs, add the relevant configuration tags in the pom.xml file.
+
++---+
+<build>
+        [...]
+        <plugins>
+                [...]
+            <plugin>
+                <groupId>com.checkmarx.maven</groupId>
+                <artifactId>checkmarx-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <configuration>
+                    <url>[Your Checkmarx app url]</url>
+                    <username>username</username>
+                    <password>password</password>
+                    <highSeveritiesThreshHold>10</highSeveritiesThreshHold>
+                    <mediumSeveritiesThreshHold>12</mediumSeveritiesThreshHold>
+                    <lowSeveritiesThreshHold>14</lowSeveritiesThreshHold>
+                    <isIncrementalScan>true</isIncrementalScan>
+                    <preset>all</preset>
+                    <fullTeamPath>Server\ServiceProvider\Company\Team</fullTeamPath>
+                    <generatePDFReport>true</generatePDFReport>
+                    <isSynchronous>true</isSynchronous>
+                    <outputDirectory>c:\users\tmp</outputDirectory>
+                    <projectName>Sample Project</projectName>
+                    <scanTimeoutInMinuets>10</scanTimeoutInMinuets>
+                </configuration>
+            </plugin>
+            [...]
+        </plugins>
+    [...]
+</build>
++---+
+
+
   The following examples show how to use the dependency plugin in more advanced use-cases:
 
-  * {{{./examples/example1.html}This is example 1}}.
+  * {{{./examples/ignoreThresholdExample.html} Ignore threshold}}
 
-  * {{{./examples/example2.html}Annd this is example 2.}}
+  * {{{./examples/runOsaScanExample.html} Run open source analysis}}
 
   []

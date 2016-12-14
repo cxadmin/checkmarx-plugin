@@ -1,0 +1,38 @@
+All Examples
+
+	* {{{./ignoreThresholdExample.html}Ignore Threshold}}
+	
+	* {{{./runOsaScanExample.html}Run Open Source Analysis}}
+	
+	[]
+
+Ignore Threshold
+
+    In case you don't want certain vulnerabilities threshold to fail the build, just don't set a threshold configuration in the POM
+
++---+
+<project>
+    [...]
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>com.checkmarx.maven</groupId>
+                    <artifactId>checkmarx-maven-plugin</artifactId>
+                    <version>1.0.0-SNAPSHOT</version>
+                    <configuration>
+                        <username>admin@cx</username>
+                        <password>Cx123456!</password>
+                        <url>http://10.31.1.114fff</url>
+                        <preset>All</preset>
+                        <projectName>yissik</projectName>
+                        <highSeveritiesThreshold>1</highSeveritiesThreshold>
+                        <!-- here should be the medium severities threshold tag -->
+                        <lowSeveritiesThreshold>5</lowSeveritiesThreshold>
+                        <isIncrementalScan>false</isIncrementalScan>
+                    </configuration>
+                </plugin>
+        </plugins>
+        </build>
+    [...]
+</project>
++---+

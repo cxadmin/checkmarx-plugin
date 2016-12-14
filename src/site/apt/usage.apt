@@ -1,11 +1,131 @@
-using the plugin
-	
-	this is how you use this plugin
+Usage
+
+	The following are brief examples on how to use the dependency goals.
+
+* Generic Plugin Configuration Information
+
+    See the following links for information about including and configuring plugins in your project:
+
+        * {{{http://maven.apache.org/guides/mini/guide-configuring-plugins.html} Configuring Plugins}}
+
+        * {{{http://maven.apache.org/guides/plugin/guide-java-plugin-development.html} Plugin Development}}
+
+        * {{{http://maven.apache.org/guides/introduction/introduction-to-plugin-prefix-mapping.html} Plugin Prefix}}
+
+* The <<<checkmarx:scan>>> mojo
+
+    This goal activates the Checkmarx SAST on a specific project.
 
 +---+
-and this is the code example
-<XML STUFF>
-	<POMS>
-	<CONFIGS>
-</XML STUFF>
+<project>
+    [...]
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.checkmarx.maven</groupId>
+                <artifactId>checkmarx-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <configuration>
+                    <username>admin@cx</username>
+                    <password>so1mePas4sw76</password>
+                    <url>http://127.0.0.1</url>
+                    <preset>All</preset>
+                    <projectName>yissik</projectName>
+                    <highSeveritiesThreshold>1</highSeveritiesThreshold>
+                    <mediumSeveritiesThreshold>8</mediumSeveritiesThreshold>
+                    <lowSeveritiesThreshold>5</lowSeveritiesThreshold>
+                    <isIncrementalScan>false</isIncrementalScan>
+                </configuration>
+            </plugin>
+    </plugins>
+    </build>
+    [...]
+</project>
 +---+
+
+    Use this mojo on the command line like so:
+
++---+
+mvn checkmarx:scan
++---+
+
+    <Notes:>
+
+    * The SAST scan can be attached to one of the Maven build phases.
+
+    * Running the scan with <<<<isSyncronious>>>> set to <<<true>>> may fail the build.
+
+* Run OSA Scan along with the <<<scan>>> goal.
+
+    You can easily run an OSA scan with the regular SAST scan, by including the <<<<osaEnabled>>>> tag in the pom.xml file:
+
++---+
+<project>
+        [...]
+        <build>
+            <plugins>
+                [...]
+                <plugin>
+                    <groupId>com.checkmarx.maven</groupId>
+                    <artifactId>checkmarx-maven-plugin</artifactId>
+                    [...]
+                    <configuration>
+                        <url>http://localhost</url>
+                        <username>[your username]</username>
+                        <password>[your password]</password>
+                        [...]
+                        <osaEnabled>true</osaEnabled>
+                        <osaHighSeveritiesThreshold>4</osaHighSeveritiesThreshold>
+                        <osaMediumSeveritiesThreshold>20</osaMediumSeveritiesThreshold>
+                        <osaLowSeveritiesThreshold>30</osaLowSeveritiesThreshold>
+                        <osaGeneratePDFReport>true</osaGeneratePDFReport>
+                        <osaGenerateHTMLReport>true</osaGenerateHTMLReport>
+                        <osaExclusions>
+                            <osaExclusion>org.codehaus.plexus.plexus-utils</osaExclusion>
+                        </osaExclusions>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </build>
+        [...]
+    </project>
++---+
+
+    <Notes:>
+
+    * You <cannot> run the OSA scan without running the SAST scan.
+
+
+* Bind the <<<checkmarx:scan>>> mojo to a build phase
+
+    You can bind the <<<scan>>> goal to any of the Maven build phases, using the <<<executions>>> tag in the project's pom.xml file.
+
+    Configure the plugin like this if you intend to bind it to execute along with your build. In this example, the <<<scan>>> will run with the <<<test>>> phase:
+
++---+
+<project>
+    [...]
+    <build>
+        <plugins>
+            <plugin>
+                [...]
+                <executions>
+                    <execution>
+                        <id>checkmarx-scan</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>scan</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                [...]
+            </plugin>
+    </plugins>
+    </build>
+    [...]
+</project>
++---+
+
+    <Notes:>
+
+    * For more information, read the {{{http://maven.apache.org/guides/mini/guide-configuring-plugins.html#Using_the_executions_Tag} official maven plugin documentation}}.

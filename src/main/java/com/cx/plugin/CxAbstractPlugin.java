@@ -115,7 +115,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     /**
      * Configure a threshold for the High Severity Vulnerabilities.
      * The build will fail if the sum of High Severity Vulnerabilities is larger than the threshold.
-     * Set to -1 to ignore threshold.
+     * Leave empty to ignore threshold.
      */
     @Parameter(defaultValue = "-1", property = "cx.highSeveritiesThreshold")
     protected int highSeveritiesThreshold;
@@ -123,7 +123,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     /**
      * Configure a threshold for the Medium Severity Vulnerabilities.
      * The build will fail if the sum of Medium Severity Vulnerabilities is larger than the threshold.
-     * Set to -1 to ignore threshold.
+     * Leave empty to ignore threshold.
      */
     @Parameter(defaultValue = "-1", property = "cx.mediumSeveritiesThreshold")
     protected int mediumSeveritiesThreshold;
@@ -131,7 +131,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     /**
      * Configure a threshold for the Low Severity Vulnerabilities.
      * The build will fail if the sum of Low Severity Vulnerabilities is larger than the threshold.
-     * Set to -1 to ignore threshold.
+     * Leave empty to ignore threshold.
      */
     @Parameter(defaultValue = "-1", property = "cx.lowSeveritiesThreshold")
     protected int lowSeveritiesThreshold;
@@ -159,7 +159,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     /**
      * Configure a threshold for the CxOSA High Severity Vulnerabilities.
      * The build will fail if the sum of High Severity Vulnerabilities is larger than the threshold.
-     * Set to -1 to ignore threshold.
+     * Leave empty to ignore threshold.
      */
     @Parameter(defaultValue = "-1", property = "cx.osaHighSeveritiesThreshold")
     protected int osaHighSeveritiesThreshold;
@@ -167,7 +167,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     /**
      * Configure a threshold for the CxOSA Medium Severity Vulnerabilities.
      * The build will fail if the sum of Medium Severity Vulnerabilities is larger than the threshold.
-     * Set to -1 to ignore threshold.
+     * Leave empty to ignore threshold.
      */
     @Parameter(defaultValue = "-1", property = "cx.osaMediumSeveritiesThreshold")
     protected int osaMediumSeveritiesThreshold;
@@ -175,7 +175,7 @@ public abstract class CxAbstractPlugin extends AbstractMojo {
     /**
      * Configure a threshold for the CxOSA Low Severity Vulnerabilities.
      * The build will fail if the sum of Low Severity Vulnerabilities is larger than the threshold.
-     * Set to -1 to ignore threshold.
+     * Leave empty to ignore threshold.
      */
     @Parameter(defaultValue = "-1", property = "cx.osaLowSeveritiesThreshold")
     protected int osaLowSeveritiesThreshold;
