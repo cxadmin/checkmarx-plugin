@@ -18,6 +18,8 @@ import java.io.File;
  */
 public interface CxClientService {
 
+    void checkServerConnectivity() throws CxClientException;
+
     void loginToServer() throws CxClientException;
 
     CreateScanResponse createLocalScan(LocalScanConfiguration conf) throws CxClientException;
@@ -50,6 +52,8 @@ public interface CxClientService {
     byte[] retrieveOSAScanPDFResults(long projectId) throws CxClientException;
 
     byte[] getScanReport(long scanId, ReportType reportType) throws CxClientException;
+
+    void disableSSLCertificateVerification();
 
     void close();//todo implement
 

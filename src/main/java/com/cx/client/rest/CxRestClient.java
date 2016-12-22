@@ -1,6 +1,7 @@
 package com.cx.client.rest;
 
 
+import com.cx.client.CxPluginHelper;
 import com.cx.client.dto.LoginRequest;
 import com.cx.client.exception.CxClientException;
 import com.cx.client.rest.dto.CreateOSAScanResponse;
@@ -18,6 +19,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
+import java.security.KeyManagementException;
 import java.util.ArrayList;
 
 /**
@@ -97,6 +99,15 @@ public class CxRestClient {
 
     public void destroy() {
         client.close();
+    }
+
+    public void disableCertificateValidation() {
+
+        try {
+            client.getSslContext().init(null, CxPluginHelper.createFakeTrustManager(), null);
+        } catch (KeyManagementException e) {
+            log.warn("Failed to disable SSL/TLS certificate validation");
+        }
     }
 
 

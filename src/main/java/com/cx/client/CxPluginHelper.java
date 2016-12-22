@@ -11,10 +11,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 
 /**
  * Created by: Dorg.
@@ -114,6 +119,46 @@ public abstract class CxPluginHelper {
         } finally {
             IOUtils.closeQuietly(os);
         }
+    }
+
+    public static void disableSSLCertificateVerification() {
+
+        HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
+            public boolean verify(String s, SSLSession sslSession) {
+                return true;
+            }
+        });
+
+        // Create a trust manager that does not validate certificate chains
+        final TrustManager[] trustManagers = createFakeTrustManager();
+
+        // Install the fake trust manager
+        try {
+            SSLContext context = SSLContext.getInstance("TLS");
+            context.init(null, trustManagers, null);
+            HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
+        } catch (KeyManagementException e) {
+            // In case of exception, do not install fake trust manager
+            log.warn("Failed to disable SSL/TLS certificate validation",e);
+        } catch (NoSuchAlgorithmException e) {
+            // In case of exception, do not install fake trust manager
+            log.warn("Failed to disable SSL/TLS certificate validation",e);
+        }
+    }
+
+    public static TrustManager[] createFakeTrustManager() {
+        return new TrustManager[]{new X509TrustManager() {
+
+            public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {}
+
+            public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {}
+
+            public X509Certificate[] getAcceptedIssuers() {
+                return new X509Certificate[0];
+            }
+        }};
+
+
     }
 
 }

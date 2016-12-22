@@ -41,7 +41,7 @@ public class CxClientServiceImpl implements CxClientService {
 
     private static final QName SERVICE_NAME = new QName("http://Checkmarx.com/v7", "CxSDKWebService");
     private static URL WSDL_LOCATION = CxSDKWebService.class.getClassLoader().getResource("WEB-INF/CxSDKWebService.wsdl");
-    private static String CHECKMARX_SERVER_WAS_NOT_FOUND_ON_THE_SPECIFIED_ADDRESS = "Checkmarx server was not found on the specified address";
+    private static String CHECKMARX_SERVER_WAS_NOT_FOUND_ON_THE_SPECIFIED_ADDRESS = "Fail to validate checkmarx server address";
     private static String SDK_PATH = "/cxwebinterface/sdk/CxSDKWebService.asmx";
     public static final String DEFAULT_PRESET_NAME = "Checkmarx Default";
 
@@ -57,12 +57,11 @@ public class CxClientServiceImpl implements CxClientService {
         client = ss.getCxSDKWebServiceSoap();
         BindingProvider bindingProvider = (BindingProvider) client;
         bindingProvider.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, url + SDK_PATH);
-        checkServerConnectivity(url);
         restClient = new CxRestClient(url.toString(), username, password);
     }
 
 
-    private void checkServerConnectivity(URL url) throws CxClientException {
+    public void checkServerConnectivity() throws CxClientException {
 
         try {
             HttpURLConnection urlConn;
@@ -70,13 +69,18 @@ public class CxClientServiceImpl implements CxClientService {
             urlConn = (HttpURLConnection) toCheck.openConnection();
             urlConn.connect();
             if (urlConn.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                throw new CxClientException(CHECKMARX_SERVER_WAS_NOT_FOUND_ON_THE_SPECIFIED_ADDRESS + ": " + url);
+                throw new CxClientException(CHECKMARX_SERVER_WAS_NOT_FOUND_ON_THE_SPECIFIED_ADDRESS + ": " + url + "response code: " + urlConn.getResponseCode() + ", message: " + urlConn.getResponseMessage());
             }
 
         } catch (IOException e) {
             log.debug(CHECKMARX_SERVER_WAS_NOT_FOUND_ON_THE_SPECIFIED_ADDRESS + ": " + url, e);
-            throw new CxClientException(CHECKMARX_SERVER_WAS_NOT_FOUND_ON_THE_SPECIFIED_ADDRESS + ": " + url, e);
+            throw new CxClientException(CHECKMARX_SERVER_WAS_NOT_FOUND_ON_THE_SPECIFIED_ADDRESS + ": " + url + ", exception message: " + e.getMessage(), e);
         }
+    }
+
+    public void disableSSLCertificateVerification() {
+        CxPluginHelper.disableSSLCertificateVerification();
+        restClient.disableCertificateValidation();
     }
 
     public void loginToServer() throws CxClientException {
@@ -154,19 +158,6 @@ public class CxClientServiceImpl implements CxClientService {
             }
         }
 
-        //to assign team path to project, prepend the team path to project name. so the below is commented out
-        //resolve preset
-//        if(conf.getFullTeamPath() != null) {
-//            String groupId = resolveGroupIdFromTeamPath(conf.getFullTeamPath());
-//            conf.setGroupId(groupId);
-//            if(groupId == null){
-//                if(conf.isFailTeamNotFound()) {
-//                    throw new CxClientException("team: ["+conf.getFullTeamPath()+"], not found");
-//                } else {
-//                    log.warn("team ["+conf.getFullTeamPath()+"] not found. team set to default.");
-//                }
-//            }
-//        }
 
         return createLocalScan(conf);
     }
