@@ -69,7 +69,7 @@ public class CxClientServiceImpl implements CxClientService {
             urlConn = (HttpURLConnection) toCheck.openConnection();
             urlConn.connect();
             if (urlConn.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                throw new CxClientException(CHECKMARX_SERVER_WAS_NOT_FOUND_ON_THE_SPECIFIED_ADDRESS + ": " + url + "response code: " + urlConn.getResponseCode() + ", message: " + urlConn.getResponseMessage());
+                throw new CxClientException(CHECKMARX_SERVER_WAS_NOT_FOUND_ON_THE_SPECIFIED_ADDRESS + ": " + url + " response code: " + urlConn.getResponseCode() + ", message: " + urlConn.getResponseMessage());
             }
 
         } catch (IOException e) {
