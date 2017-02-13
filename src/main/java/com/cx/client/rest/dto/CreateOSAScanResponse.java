@@ -1,9 +1,13 @@
 package com.cx.client.rest.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * Created by: Dorg.
  * Date: 06/10/2016.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CreateOSAScanResponse {
 
 
