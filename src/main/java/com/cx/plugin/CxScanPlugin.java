@@ -198,7 +198,7 @@ public class CxScanPlugin extends AbstractMojo {
     /**
      * Define an output directory for the scan reports.
      */
-    @Parameter(defaultValue = "${project.build.directory}\\checkmarx", property = "cx.outputDirectory")
+    @Parameter(defaultValue = "${project.build.directory}/checkmarx", property = "cx.outputDirectory")
     private File outputDirectory;
 
     /**
@@ -323,14 +323,14 @@ public class CxScanPlugin extends AbstractMojo {
                     byte[] osaPDF = cxClientService.retrieveOSAScanPDFResults(createScanResponse.getProjectId());
                     String pdfFileName = OSA_REPORT_NAME + "_" + now + ".pdf";
                     FileUtils.writeByteArrayToFile(new File(outputDirectory, pdfFileName), osaPDF);
-                    log.info("OSA PDF Report Can Be Found in: " + outputDirectory + "\\" + pdfFileName);
+                    log.info("OSA PDF Report Can Be Found in: " + outputDirectory + File.separator + pdfFileName);
                 }
 
                 if (osaGenerateHTMLReport) {
                     String osaHtml = cxClientService.retrieveOSAScanHtmlResults(createScanResponse.getProjectId());
                     String htmlFileName = OSA_REPORT_NAME + "_" + now + ".html";
                     FileUtils.writeStringToFile(new File(outputDirectory, htmlFileName), osaHtml, Charset.defaultCharset());
-                    log.info("OSA HTML Report Can Be Found in: " + outputDirectory + "\\" + htmlFileName);
+                    log.info("OSA HTML Report Can Be Found in: " + outputDirectory + File.separator + htmlFileName);
                 }
 
             }
@@ -426,13 +426,13 @@ public class CxScanPlugin extends AbstractMojo {
 
             String now = DateFormatUtils.format(new Date(), "dd_MM_yyyy-HH_mm_ss");
             String htmlFileName = "report" + "_" + now + ".html";
-            File htmlReportFile = new File(outputDirectory + "\\" + htmlFileName);
+            File htmlReportFile = new File(outputDirectory + File.separator + htmlFileName);
 
             String html = CxPluginHelper.compileHtmlReport(csv, highSeveritiesThreshold, mediumSeveritiesThreshold, lowSeveritiesThreshold);
 
             if (html != null) {
                 FileUtils.writeStringToFile(htmlReportFile, html, Charset.defaultCharset());
-                log.info("HTML Report Can Be Found in: " + outputDirectory + "\\" + htmlFileName);
+                log.info("HTML Report Can Be Found in: " + outputDirectory + File.separator+ htmlFileName);
             } else {
                 log.warn("Fail To Generate HTML Report");
             }
@@ -526,7 +526,7 @@ public class CxScanPlugin extends AbstractMojo {
             String now = DateFormatUtils.format(new Date(), "dd_MM_yyyy-HH_mm_ss");
             String pdfFileName = PDF_REPORT_NAME + "_" + now + ".pdf";
             FileUtils.writeByteArrayToFile(new File(outputDirectory, pdfFileName), scanReport);
-            log.info("PDF Report Can Be Found in: " + outputDirectory + "\\" + pdfFileName);
+            log.info("PDF Report Can Be Found in: " + outputDirectory + File.separator + pdfFileName);
         } catch (Exception e) {
             log.warn("Fail to Generate PDF Report");
             log.debug("Fail to Generate PDF Report", e);
@@ -572,7 +572,7 @@ public class CxScanPlugin extends AbstractMojo {
         zipArchiver.setDestFile(new File(outputDirectory, SOURCES_ZIP_NAME + ".zip"));
         try {
             zipArchiver.createArchive();
-            log.info("Sources Zipped at: " + outputDirectory + "\\" + SOURCES_ZIP_NAME + ".zip");
+            log.info("Sources Zipped at: " + outputDirectory + File.separator + SOURCES_ZIP_NAME + ".zip");
         } catch (IOException e) {
             throw new MojoExecutionException("Fail to Create Zip Sources: ", e);
         }
@@ -607,7 +607,7 @@ public class CxScanPlugin extends AbstractMojo {
                 CxPluginHelper.createEmptyZip(ret);
             } else {
                 zipArchiver.createArchive();
-                log.info("Files for OSA scan zipped at: " + outputDirectory + "\\" + OSA_ZIP_NAME + ".zip");
+                log.info("Files for OSA scan zipped at: " + outputDirectory + File.separator + OSA_ZIP_NAME + ".zip");
             }
         } catch (Exception e) {
             throw new MojoExecutionException("Fail to zip files for OSA scan: " + e.getMessage(), e);
