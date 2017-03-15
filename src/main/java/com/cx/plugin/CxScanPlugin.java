@@ -315,19 +315,19 @@ public class CxScanPlugin extends AbstractMojo {
                 cxClientService.waitForOSAScanToFinish(osaScan.getScanId(), -1, new OSAConsoleScanWaitHandler());
                 log.info("OSA Scan Finished Successfully");
                 log.info("Creating OSA Reports");
-                osaSummaryResults = cxClientService.retrieveOSAScanSummaryResults(createScanResponse.getProjectId());
+                osaSummaryResults = cxClientService.retrieveOSAScanSummaryResults(osaScan.getScanId());
                 printOSAResultsToConsole(osaSummaryResults);
 
                 String now = DateFormatUtils.format(new Date(), "dd_MM_yyyy-HH_mm_ss");
                 if (osaGeneratePDFReport) {
-                    byte[] osaPDF = cxClientService.retrieveOSAScanPDFResults(createScanResponse.getProjectId());
+                    byte[] osaPDF = cxClientService.retrieveOSAScanPDFResults(osaScan.getScanId());
                     String pdfFileName = OSA_REPORT_NAME + "_" + now + ".pdf";
                     FileUtils.writeByteArrayToFile(new File(outputDirectory, pdfFileName), osaPDF);
                     log.info("OSA PDF Report Can Be Found in: " + outputDirectory + File.separator + pdfFileName);
                 }
 
                 if (osaGenerateHTMLReport) {
-                    String osaHtml = cxClientService.retrieveOSAScanHtmlResults(createScanResponse.getProjectId());
+                    String osaHtml = cxClientService.retrieveOSAScanHtmlResults(osaScan.getScanId());
                     String htmlFileName = OSA_REPORT_NAME + "_" + now + ".html";
                     FileUtils.writeStringToFile(new File(outputDirectory, htmlFileName), osaHtml, Charset.defaultCharset());
                     log.info("OSA HTML Report Can Be Found in: " + outputDirectory + File.separator + htmlFileName);

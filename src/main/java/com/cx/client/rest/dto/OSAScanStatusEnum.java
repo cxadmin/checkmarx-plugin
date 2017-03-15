@@ -6,9 +6,9 @@ package com.cx.client.rest.dto;
  */
 public enum OSAScanStatusEnum {
 
-    NONE(0, "None"),
+    NOT_STARTED(0, "NotStarted"),
     IN_PROGRESS(1, "In progress"),
-    FINISHED(2, "Finished"),
+    SUCCEEDED(2, "Succeeded"),
     FAILED(3 ,"Failed");
 
     private int num;

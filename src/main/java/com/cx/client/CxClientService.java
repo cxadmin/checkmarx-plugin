@@ -45,11 +45,11 @@ public interface CxClientService {
 
     OSAScanStatus waitForOSAScanToFinish(String scanId, long scanTimeoutInMin, ScanWaitHandler<OSAScanStatus> waitHandler) throws CxClientException;
 
-    OSASummaryResults retrieveOSAScanSummaryResults(long projectId) throws CxClientException;
+    OSASummaryResults retrieveOSAScanSummaryResults(String scanId) throws CxClientException;
 
-    String retrieveOSAScanHtmlResults(long projectId) throws CxClientException;
+    String retrieveOSAScanHtmlResults(String scanId) throws CxClientException;
 
-    byte[] retrieveOSAScanPDFResults(long projectId) throws CxClientException;
+    byte[] retrieveOSAScanPDFResults(String scanId) throws CxClientException;
 
     byte[] getScanReport(long scanId, ReportType reportType) throws CxClientException;
 

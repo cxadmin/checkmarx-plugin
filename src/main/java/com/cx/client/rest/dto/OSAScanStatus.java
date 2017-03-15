@@ -1,6 +1,9 @@
 package com.cx.client.rest.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
 
 /**
  * Created by: Dorg.
@@ -9,31 +12,58 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class OSAScanStatus {
 
-    private OSAScanStatusEnum status;
-    private String message;
-    private String link;
+    private String id;
+    private String startAnalyzeTime;
+    private String endAnalyzeTime;
+    private String origin;
+    private OSAScanState state;
+    private List<String> sharedSourceLocationPaths;
 
-    public OSAScanStatusEnum getStatus() {
-        return status;
+    public String getId() {
+        return id;
     }
 
-    public void setStatus(OSAScanStatusEnum status) {
-        this.status = status;
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public String getMessage() {
-        return message;
+    public String getStartAnalyzeTime() {
+        return startAnalyzeTime;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setStartAnalyzeTime(String startAnalyzeTime) {
+        this.startAnalyzeTime = startAnalyzeTime;
     }
 
-    public String getLink() {
-        return link;
+    public String getEndAnalyzeTime() {
+        return endAnalyzeTime;
     }
 
-    public void setLink(String link) {
-        this.link = link;
+    public void setEndAnalyzeTime(String endAnalyzeTime) {
+        this.endAnalyzeTime = endAnalyzeTime;
+    }
+
+    public String getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(String origin) {
+        this.origin = origin;
+    }
+
+    public OSAScanState getState() {
+        return state;
+    }
+
+    public void setState(OSAScanState state) {
+        this.state = state;
+    }
+
+    public List<String> getSharedSourceLocationPaths() {
+        return sharedSourceLocationPaths;
+    }
+
+    public void setSharedSourceLocationPaths(List<String> sharedSourceLocationPaths) {
+        this.sharedSourceLocationPaths = sharedSourceLocationPaths;
     }
 }

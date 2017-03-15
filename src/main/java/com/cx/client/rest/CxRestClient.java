@@ -34,10 +34,8 @@ public class CxRestClient {
     private WebTarget root;
 
     public static final String OSA_SCAN_PROJECT_PATH = "projects/{projectId}/scans";
-    public static final String OSA_SCAN_STATUS_PATH = "scans/{scanId}";
-    public static final String OSA_SCAN_SUMMARY_PATH = "projects/{projectId}/summaryresults";
-    public static final String OSA_SCAN_HTML_PATH = "projects/{projectId}/opensourceanalysis/htmlresults";
-    public static final String OSA_SCAN_PDF_PATH = "projects/{projectId}/opensourceanalysis/pdfresults";
+    public static final String OSA_SCAN_STATUS_PATH = "osa/scans/{scanId}";
+    public static final String OSA_SCAN_SUMMARY_PATH = "osa/reports";
     private static final String AUTHENTICATION_PATH = "auth/login";
     public static final String OSA_ZIPPED_FILE_KEY_NAME = "OSAZippedSourceCode";
     private static final String ROOT_PATH = "CxRestAPI";
@@ -52,14 +50,6 @@ public class CxRestClient {
     private ClientResponseFilter clientResponseFilter = new ClientResponseFilter() {
 
         public void filter(ClientRequestContext clientRequestContext, ClientResponseContext clientResponseContext) throws IOException {
-//            if (cookies != null) {
-//                clientRequestContext.getHeaders().put("Cookie", cookies);
-//            }
-//
-//            if (csrfToken != null) {
-//                clientRequestContext.getHeaders().putSingle(CSRF_TOKEN_HEADER, csrfToken);
-//            }
-
             // copy cookies
             if (clientResponseContext.getCookies() != null) {
                 if (cookies == null) {
@@ -141,23 +131,22 @@ public class CxRestClient {
         return convertToObject(response, OSAScanStatus.class);
     }
 
-    public OSASummaryResults getOSAScanSummaryResults(long projectId) throws CxClientException {
-        Response response = root.path(OSA_SCAN_SUMMARY_PATH).resolveTemplate("projectId", projectId).request().get();
+    public OSASummaryResults getOSAScanSummaryResults(String scanId) throws CxClientException {
+        Response response = root.path(OSA_SCAN_SUMMARY_PATH).queryParam("scanId", scanId).request(MediaType.APPLICATION_JSON).get();
         validateResponse(response, Response.Status.OK, "fail get OSA scan summary results");
         return convertToObject(response, OSASummaryResults.class);
     }
 
-    public String getOSAScanHtmlResults(long projectId) throws CxClientException {
-        Response response = root.path(OSA_SCAN_HTML_PATH).resolveTemplate("projectId", projectId).request().get();
+    public String getOSAScanHtmlResults(String scanId) throws CxClientException {
+        Response response = root.path(OSA_SCAN_SUMMARY_PATH).queryParam("scanId", scanId).request(MediaType.TEXT_HTML).get();
         validateResponse(response, Response.Status.OK, "fail get OSA scan html results");
         return response.readEntity(String.class);
     }
 
-    public byte[] getOSAScanPDFResults(long projectId) throws CxClientException {
-        Response response = root.path(OSA_SCAN_PDF_PATH).resolveTemplate("projectId", projectId).request().get();
+    public byte[] getOSAScanPDFResults(String scanId) throws CxClientException {
+        Response response = root.path(OSA_SCAN_SUMMARY_PATH).queryParam("scanId", scanId).request("application/pdf").get();
         validateResponse(response, Response.Status.OK, "fail get OSA scan pdf results");
         return response.readEntity(byte[].class);
-
     }
 
     private void validateResponse(Response response, Response.Status expectedStatus, String message) throws CxClientException {

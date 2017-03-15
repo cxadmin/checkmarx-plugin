@@ -7,10 +7,7 @@ import com.cx.client.dto.ReportType;
 import com.cx.client.dto.ScanResults;
 import com.cx.client.exception.CxClientException;
 import com.cx.client.rest.CxRestClient;
-import com.cx.client.rest.dto.CreateOSAScanResponse;
-import com.cx.client.rest.dto.OSAScanStatus;
-import com.cx.client.rest.dto.OSAScanStatusEnum;
-import com.cx.client.rest.dto.OSASummaryResults;
+import com.cx.client.rest.dto.*;
 import org.codehaus.plexus.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -373,7 +370,8 @@ public class CxClientServiceImpl implements CxClientService {
 
         long startTime = System.currentTimeMillis();
         OSAScanStatus scanStatus = null;
-        OSAScanStatusEnum status = null;
+        OSAScanState state = null;
+        int stateId = 0;
 
         waitHandler.onStart(startTime, scanTimeoutInMin);
 
@@ -397,22 +395,24 @@ public class CxClientServiceImpl implements CxClientService {
 
             retry = waitForScanToFinishRetry;
 
-            status = scanStatus.getStatus();
+            state = scanStatus.getState();
 
-            if (OSAScanStatusEnum.FAILED.equals(status)) {
+            stateId = state.getId();
+
+            if (OSAScanStatusEnum.FAILED.getNum() == stateId) {
                 waitHandler.onFail(scanStatus);
-                throw new CxClientException("OSA scan cannot be completed. status: [" + status.uiValue() + "]. message: [" + StringUtils.defaultString(scanStatus.getMessage()) + "]");
+                throw new CxClientException("OSA scan cannot be completed. status: [" + state.getName() + "]. message: [" + StringUtils.defaultString(scanStatus.getState().getFailureReason()) + "]");
             }
 
 
-            if (OSAScanStatusEnum.FINISHED.equals(status)) {
+            if (OSAScanStatusEnum.SUCCEEDED.getNum() == stateId) {
                 waitHandler.onSuccess(scanStatus);
                 return scanStatus;
             }
             waitHandler.onIdle(scanStatus);
         }
 
-        if (!OSAScanStatusEnum.FINISHED.equals(status)) {
+        if (OSAScanStatusEnum.SUCCEEDED.getNum() != stateId) {
             waitHandler.onTimeout(scanStatus);
             throw new CxClientException("OSA scan has reached the time limit. (" + scanTimeoutInMin + " minutes).");
         }
@@ -420,16 +420,16 @@ public class CxClientServiceImpl implements CxClientService {
         return scanStatus;
     }
 
-    public OSASummaryResults retrieveOSAScanSummaryResults(long projectId) throws CxClientException {
-        return restClient.getOSAScanSummaryResults(projectId);
+    public OSASummaryResults retrieveOSAScanSummaryResults(String scanId) throws CxClientException {
+        return restClient.getOSAScanSummaryResults(scanId);
     }
 
-    public String retrieveOSAScanHtmlResults(long projectId) throws CxClientException {
-        return restClient.getOSAScanHtmlResults(projectId);
+    public String retrieveOSAScanHtmlResults(String scanId) throws CxClientException {
+        return restClient.getOSAScanHtmlResults(scanId);
     }
 
-    public byte[] retrieveOSAScanPDFResults(long projectId) throws CxClientException {
-        return restClient.getOSAScanPDFResults(projectId);
+    public byte[] retrieveOSAScanPDFResults(String scanId) throws CxClientException {
+        return restClient.getOSAScanPDFResults(scanId);
     }
 
     public static int getWaitForScanToFinishRetry() {
