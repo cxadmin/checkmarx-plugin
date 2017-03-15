@@ -1,9 +1,12 @@
 package com.cx.client.rest.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * Created by: Dorg.
  * Date: 09/10/2016.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class OSASummaryResults {
 
     private int totalLibraries;
