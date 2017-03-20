@@ -106,7 +106,7 @@ public class CxRestClient {
         csrfToken = null;
         LoginRequest credentials = new LoginRequest(username, password);
         Response response = root.path(AUTHENTICATION_PATH).request().post(Entity.entity(credentials, MediaType.APPLICATION_JSON));
-        validateResponse(response, Response.Status.OK, "fail to perform login");
+        validateResponse(response, Response.Status.OK, "Failed to login");
     }
 
     public CreateOSAScanResponse createOSAScan(long projectId, File zipFile) throws CxClientException {
@@ -120,32 +120,32 @@ public class CxRestClient {
         Response response = root.path(OSA_SCAN_PROJECT_PATH).resolveTemplate("projectId", projectId).request(MediaType.APPLICATION_JSON_TYPE)
                 .post(Entity.entity(multiPart, multiPart.getMediaType()));
 
-        validateResponse(response, Response.Status.ACCEPTED, "fail create OSA scan");
+        validateResponse(response, Response.Status.ACCEPTED, "Failed to create OSA scan");
 
         return convertToObject(response, CreateOSAScanResponse.class);
     }
 
     public OSAScanStatus getOSAScanStatus(String scanId) throws CxClientException {
         Response response = root.path(OSA_SCAN_STATUS_PATH).resolveTemplate("scanId", scanId).request().get();
-        validateResponse(response, Response.Status.OK, "fail get OSA scan status");
+        validateResponse(response, Response.Status.OK, "Failed to get OSA scan status");
         return convertToObject(response, OSAScanStatus.class);
     }
 
     public OSASummaryResults getOSAScanSummaryResults(String scanId) throws CxClientException {
         Response response = root.path(OSA_SCAN_SUMMARY_PATH).queryParam("scanId", scanId).request(MediaType.APPLICATION_JSON).get();
-        validateResponse(response, Response.Status.OK, "fail get OSA scan summary results");
+        validateResponse(response, Response.Status.OK, "Failed to get OSA scan summary results");
         return convertToObject(response, OSASummaryResults.class);
     }
 
     public String getOSAScanHtmlResults(String scanId) throws CxClientException {
         Response response = root.path(OSA_SCAN_SUMMARY_PATH).queryParam("scanId", scanId).request(MediaType.TEXT_HTML).get();
-        validateResponse(response, Response.Status.OK, "fail get OSA scan html results");
+        validateResponse(response, Response.Status.OK, "Failed to get OSA scan HTML results");
         return response.readEntity(String.class);
     }
 
     public byte[] getOSAScanPDFResults(String scanId) throws CxClientException {
         Response response = root.path(OSA_SCAN_SUMMARY_PATH).queryParam("scanId", scanId).request("application/pdf").get();
-        validateResponse(response, Response.Status.OK, "fail get OSA scan pdf results");
+        validateResponse(response, Response.Status.OK, "Failed to get OSA scan PDF results");
         return response.readEntity(byte[].class);
     }
 
@@ -161,8 +161,8 @@ public class CxRestClient {
         try {
             ret = mapper.readValue(json, valueType);
         } catch (IOException e) {
-            log.debug("fail to parse json response: [" + json + "]", e);
-            throw new CxClientException("fail to parse json response: " + e.getMessage());
+            log.debug("Failed to parse JSON response: [" + json + "]", e);
+            throw new CxClientException("Failed to parse JSON response: " + e.getMessage());
         }
         return ret;
     }

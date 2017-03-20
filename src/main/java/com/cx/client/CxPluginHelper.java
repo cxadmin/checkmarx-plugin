@@ -50,7 +50,7 @@ public abstract class CxPluginHelper {
         try {
             cxClientType = CxClientType.valueOf(conf.getClientOrigin().name());
         } catch (Exception e) {
-            log.debug("fail to convert client origin enum from value: {}. client origin set to SDK", conf.getClientOrigin().name());
+            log.debug("Failed to convert client origin enum from value: {}. Client origin set to SDK", conf.getClientOrigin().name());
         }
         cliScanArgs.setClientOrigin(cxClientType);
         cliScanArgs.setIsIncremental(conf.isIncrementalScan());
@@ -82,9 +82,9 @@ public abstract class CxPluginHelper {
             ret = htmlTemplate.replace("*RESULTS_THRESHOLD*", highThreshold + "," + mediumThreshold + "," + lowThreshold);
 
         } catch (IOException e) {
-            log.debug("fail to get html template from: " +HTML_TEMPLATE_LOCATION, e);
+            log.debug("Failed to get HTML template from: " +HTML_TEMPLATE_LOCATION, e);
         } catch (Exception e) {
-            log.debug("fail to compile html report. exception: ", e);
+            log.debug("Failed to compile HTML report. exception: ", e);
         }
 
         return ret;

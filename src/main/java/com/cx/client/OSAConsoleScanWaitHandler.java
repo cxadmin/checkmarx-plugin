@@ -24,20 +24,20 @@ public class OSAConsoleScanWaitHandler implements ScanWaitHandler<OSAScanStatus>
 
         String reason = "";
         if(scanStatus.getState() != null && !StringUtils.isEmpty(scanStatus.getState().getFailureReason())) {
-            reason = " reason: " + scanStatus.getState().getFailureReason();
+            reason = " Reason: " + scanStatus.getState().getFailureReason();
         }
 
-        throw new CxClientException("OSA scan has reached the time limit ("+scanTimeoutInMin+" minutes). status: ["+ status +"]." +reason );
+        throw new CxClientException("OSA scan has reached the time limit ("+scanTimeoutInMin+" minutes). Status: ["+ status +"]." +reason );
 
     }
 
     public void onFail(OSAScanStatus scanStatus) throws CxClientException {
         String reason = "";
         if(scanStatus.getState() != null && !StringUtils.isEmpty(scanStatus.getState().getFailureReason())) {
-            reason = " reason: " + scanStatus.getState().getFailureReason();
+            reason = " Reason: " + scanStatus.getState().getFailureReason();
         }
 
-        throw new CxClientException("OSA scan cannot be completed. status ["+scanStatus.getState().getName()+"]."  + reason);
+        throw new CxClientException("OSA scan cannot be completed. Status ["+scanStatus.getState().getName()+"]."  + reason);
     }
 
     public void onIdle(OSAScanStatus scanStatus) {
@@ -50,14 +50,14 @@ public class OSAConsoleScanWaitHandler implements ScanWaitHandler<OSAScanStatus>
         String minutesStr = (minutes < 10)?("0" + Long.toString(minutes)):(Long.toString(minutes));
         String secondsStr = (seconds < 10)?("0" + Long.toString(seconds)):(Long.toString(seconds));
 
-        log.info("Waiting for OSA Scan Results. " +
-                "Time Elapsed: " + hoursStr + ":" + minutesStr + ":" + secondsStr + ". " +
+        log.info("Waiting for OSA scan results. " +
+                "Time elapsed: " + hoursStr + ":" + minutesStr + ":" + secondsStr + ". " +
                 "Status: " + scanStatus.getState().getName());
 
     }
 
     public void onSuccess(OSAScanStatus scanStatus) {
-        log.info("OSA Scan Finished.");
+        log.info("OSA scan finished.");
     }
 
     public void onStart(long startTime, long scanTimeoutInMin) {

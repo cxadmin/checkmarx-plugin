@@ -20,12 +20,12 @@ public class ConsoleScanWaitHandler implements ScanWaitHandler<CxWSResponseScanS
     public void onTimeout(CxWSResponseScanStatus scanStatus) throws CxClientException {
 
         String status =  scanStatus.getCurrentStatus() == null ? CurrentStatusEnum.UNKNOWN.value() : scanStatus.getCurrentStatus().value();
-        throw new CxClientException("scan has reached the time limit ("+scanTimeoutInMin+" minutes). status: ["+ status +"]");
+        throw new CxClientException("Scan has reached the time limit ("+scanTimeoutInMin+" minutes). Status: ["+ status +"]");
 
     }
 
     public void onFail(CxWSResponseScanStatus scanStatus) throws CxClientException {
-        throw new CxClientException("scan cannot be completed. status ["+scanStatus.getCurrentStatus().value()+"].\n Stage message: ["+scanStatus.getStageMessage()+"]");
+        throw new CxClientException("Scan cannot be completed. Status ["+scanStatus.getCurrentStatus().value()+"].\n Stage message: ["+scanStatus.getStageMessage()+"]");
 
     }
 
@@ -39,15 +39,15 @@ public class ConsoleScanWaitHandler implements ScanWaitHandler<CxWSResponseScanS
         String minutesStr = (minutes < 10)?("0" + Long.toString(minutes)):(Long.toString(minutes));
         String secondsStr = (seconds < 10)?("0" + Long.toString(seconds)):(Long.toString(seconds));
 
-        log.info("Waiting for Results. " +
-                "Time Elapsed: " + hoursStr + ":" + minutesStr + ":" + secondsStr + ". " +
-                scanStatus.getTotalPercent() + "% Processed. " +
+        log.info("Waiting for results. " +
+                "Elapsed time: " + hoursStr + ":" + minutesStr + ":" + secondsStr + ". " +
+                scanStatus.getTotalPercent() + "% processed. " +
                 "Status: " + scanStatus.getStageName() + ".");
 
     }
 
     public void onSuccess(CxWSResponseScanStatus scanStatus) {
-        log.info("Scan Finished: " + scanStatus.getStageMessage());
+        log.info("Scan finished: " + scanStatus.getStageMessage());
     }
 
     public void onStart(long startTime, long scanTimeoutInMin) {
