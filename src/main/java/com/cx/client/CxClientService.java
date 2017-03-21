@@ -6,11 +6,10 @@ import com.cx.client.dto.LocalScanConfiguration;
 import com.cx.client.dto.ReportType;
 import com.cx.client.dto.ScanResults;
 import com.cx.client.exception.CxClientException;
-import com.cx.client.rest.dto.CreateOSAScanResponse;
-import com.cx.client.rest.dto.OSAScanStatus;
-import com.cx.client.rest.dto.OSASummaryResults;
+import com.cx.client.rest.dto.*;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * Created by: Dorg.
@@ -46,6 +45,10 @@ public interface CxClientService {
     OSAScanStatus waitForOSAScanToFinish(String scanId, long scanTimeoutInMin, ScanWaitHandler<OSAScanStatus> waitHandler) throws CxClientException;
 
     OSASummaryResults retrieveOSAScanSummaryResults(String scanId) throws CxClientException;
+
+    List<Library> getOSALibraries(String scanId) throws CxClientException;
+
+    List<CVE> getOSAVulnerabilities(String scanId) throws CxClientException;
 
     String retrieveOSAScanHtmlResults(String scanId) throws CxClientException;
 

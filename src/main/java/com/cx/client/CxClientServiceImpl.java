@@ -416,6 +416,14 @@ public class CxClientServiceImpl implements CxClientService {
         return restClient.getOSAScanSummaryResults(scanId);
     }
 
+    public List<Library> getOSALibraries(String scanId) throws CxClientException {
+        return restClient.getOSALibraries(scanId);
+    }
+
+    public List<CVE> getOSAVulnerabilities(String scanId) throws CxClientException {
+        return restClient.getOSAVulnerabilities(scanId);
+    }
+
     public String retrieveOSAScanHtmlResults(String scanId) throws CxClientException {
         return restClient.getOSAScanHtmlResults(scanId);
     }

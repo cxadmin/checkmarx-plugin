@@ -3,8 +3,11 @@ package com.cx.plugin;
 import com.cx.client.*;
 import com.cx.client.dto.*;
 import com.cx.client.exception.CxClientException;
+import com.cx.client.rest.dto.CVE;
 import com.cx.client.rest.dto.CreateOSAScanResponse;
+import com.cx.client.rest.dto.Library;
 import com.cx.client.rest.dto.OSASummaryResults;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
@@ -47,7 +50,10 @@ public class CxScanPlugin extends AbstractMojo {
     public static final String SOURCES_ZIP_NAME = "sources";
     public static final String OSA_ZIP_NAME = "OSAScan";
     public static final String PDF_REPORT_NAME = "CxReport";
-    public static final String OSA_REPORT_NAME = "OSA_Report";
+    public static final String OSA_REPORT_NAME = "OSAReport";
+    public static final String OSA_LIBRARIES_NAME = "OSALibraries";
+    public static final String OSA_VULNERABILITIES_NAME = "OSAVulnerabilities";
+    public static final String OSA_SUMMARY_NAME = "OSASummary";
     /**
      * The username of the user running the scan.
      */
@@ -196,6 +202,12 @@ public class CxScanPlugin extends AbstractMojo {
     private boolean osaGenerateHTMLReport;
 
     /**
+     * If true, a CxOSA Json reports will be generated in the output directory.
+     */
+    @Parameter(defaultValue = "true", property = "cx.osaGenerateJsonReport")
+    private boolean osaGenerateJsonReport;
+
+    /**
      * Define an output directory for the scan reports.
      */
     @Parameter(defaultValue = "${project.build.directory}/checkmarx", property = "cx.outputDirectory")
@@ -214,6 +226,8 @@ public class CxScanPlugin extends AbstractMojo {
     @Component(role = Archiver.class, hint = "zip")
     private ZipArchiver zipArchiver;
     private CxClientService cxClientService;
+    private ObjectMapper objectMapper = new ObjectMapper();
+
     private String scanResultsUrl;
     private String projectStateLink;
 
@@ -332,6 +346,23 @@ public class CxScanPlugin extends AbstractMojo {
                     String htmlFileName = OSA_REPORT_NAME + "_" + now + ".html";
                     FileUtils.writeStringToFile(new File(outputDirectory, htmlFileName), osaHtml, Charset.defaultCharset());
                     log.info("OSA HTML report location: " + outputDirectory + File.separator + htmlFileName);
+                }
+
+                if(osaGenerateJsonReport) {
+                    //create json files
+                    String fileName =  OSA_SUMMARY_NAME + "_" + now + ".json";
+                    objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(outputDirectory, fileName), osaSummaryResults);
+                    log.info("OSA summary json location: " + outputDirectory + File.separator + fileName);
+
+                    List<Library> libraries = cxClientService.getOSALibraries(osaScan.getScanId());
+                    fileName = OSA_LIBRARIES_NAME + "_" + now + ".json";
+                    objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(outputDirectory, fileName), libraries);
+                    log.info("OSA libraries json location: " + outputDirectory + File.separator + fileName);
+
+                    List<CVE> osaVulnerabilities = cxClientService.getOSAVulnerabilities(osaScan.getScanId());
+                    fileName =  OSA_VULNERABILITIES_NAME + "_" + now + ".json";
+                    objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(outputDirectory, fileName), osaVulnerabilities);
+                    log.info("OSA vulnerabilities json location: " + outputDirectory + File.separator + fileName);
                 }
 
             }

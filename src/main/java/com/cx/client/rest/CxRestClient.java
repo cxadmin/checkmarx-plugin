@@ -4,10 +4,10 @@ package com.cx.client.rest;
 import com.cx.client.CxPluginHelper;
 import com.cx.client.dto.LoginRequest;
 import com.cx.client.exception.CxClientException;
-import com.cx.client.rest.dto.CreateOSAScanResponse;
-import com.cx.client.rest.dto.OSAScanStatus;
-import com.cx.client.rest.dto.OSASummaryResults;
+import com.cx.client.rest.dto.*;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by: Dorg.
@@ -36,10 +37,13 @@ public class CxRestClient {
     public static final String OSA_SCAN_PROJECT_PATH = "projects/{projectId}/scans";
     public static final String OSA_SCAN_STATUS_PATH = "osa/scans/{scanId}";
     public static final String OSA_SCAN_SUMMARY_PATH = "osa/reports";
+    public static final String OSA_SCAN_LIBRARIES_PATH = "/osa/libraries";
+    public static final String OSA_SCAN_VULNERABILITIES_PATH = "/osa/vulnerabilities";
     private static final String AUTHENTICATION_PATH = "auth/login";
     public static final String OSA_ZIPPED_FILE_KEY_NAME = "OSAZippedSourceCode";
     private static final String ROOT_PATH = "CxRestAPI";
     public static final String CSRF_TOKEN_HEADER = "CXCSRFToken";
+    public static final long MAX_ITEMS = 1000000;
     private static ArrayList<Object> cookies;
     private static String csrfToken;
     ObjectMapper mapper = new ObjectMapper();
@@ -143,6 +147,22 @@ public class CxRestClient {
         return response.readEntity(String.class);
     }
 
+    public List<Library> getOSALibraries(String scanId) throws CxClientException {
+        Response response = root.path(OSA_SCAN_LIBRARIES_PATH).queryParam("scanId", scanId)
+                .queryParam("itemsPerPage", MAX_ITEMS).request(MediaType.APPLICATION_JSON).get();
+
+        validateResponse(response, Response.Status.OK, "Failed to get OSA libraries");
+        return convertToObject(response, TypeFactory.defaultInstance().constructCollectionType(List.class, Library.class));
+    }
+
+    public List<CVE> getOSAVulnerabilities(String scanId) throws CxClientException {
+        Response response = root.path(OSA_SCAN_VULNERABILITIES_PATH).queryParam("scanId", scanId)
+                .queryParam("itemsPerPage", MAX_ITEMS).request(MediaType.APPLICATION_JSON).get();
+
+        validateResponse(response, Response.Status.OK, "Failed to get OSA vulnerabilities");
+        return convertToObject(response, TypeFactory.defaultInstance().constructCollectionType(List.class, CVE.class));
+    }
+
     public byte[] getOSAScanPDFResults(String scanId) throws CxClientException {
         Response response = root.path(OSA_SCAN_SUMMARY_PATH).queryParam("scanId", scanId).request("application/pdf").get();
         validateResponse(response, Response.Status.OK, "Failed to get OSA scan PDF results");
@@ -160,6 +180,18 @@ public class CxRestClient {
         T ret = null;
         try {
             ret = mapper.readValue(json, valueType);
+        } catch (IOException e) {
+            log.debug("Failed to parse JSON response: [" + json + "]", e);
+            throw new CxClientException("Failed to parse JSON response: " + e.getMessage());
+        }
+        return ret;
+    }
+
+    private <T> T convertToObject(Response response, JavaType javaType) throws CxClientException {
+        String json = response.readEntity(String.class);
+        T ret = null;
+        try {
+            ret = mapper.readValue(json, javaType);
         } catch (IOException e) {
             log.debug("Failed to parse JSON response: [" + json + "]", e);
             throw new CxClientException("Failed to parse JSON response: " + e.getMessage());
