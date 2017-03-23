@@ -410,6 +410,7 @@ public class CxScanPlugin extends AbstractMojo {
             log.info("osaLowSeveritiesThreshold: " + (osaLowSeveritiesThreshold < 0 ? "[No Threshold]" : osaLowSeveritiesThreshold));
             log.info("osaGeneratePDFReport: " + osaGeneratePDFReport);
             log.info("osaGenerateHTMLReport: " + osaGenerateHTMLReport);
+            log.info("osaGenerateJsonReport: " + osaGenerateJsonReport);
         }
         log.info("------------------------------------------------------------------------");
 
@@ -432,9 +433,9 @@ public class CxScanPlugin extends AbstractMojo {
         log.info("------------------------");
         log.info("Vulnerabilities Summary:");
         log.info("------------------------");
-        log.info("OSA high severity results: " + osaSummaryResults.getHighVulnerabilities());
-        log.info("OSA medium severity results: " + osaSummaryResults.getMediumVulnerabilities());
-        log.info("OSA low severity results: " + osaSummaryResults.getLowVulnerabilities());
+        log.info("OSA high severity results: " + osaSummaryResults.getTotalHighVulnerabilities());
+        log.info("OSA medium severity results: " + osaSummaryResults.getTotalMediumVulnerabilities());
+        log.info("OSA low severity results: " + osaSummaryResults.getTotalLowVulnerabilities());
         log.info("Vulnerability score: " + osaSummaryResults.getVulnerabilityScore());
         log.info("");
         log.info("-----------------------");
@@ -514,18 +515,18 @@ public class CxScanPlugin extends AbstractMojo {
         }
 
         if (osaEnabled && osaSummaryResults != null) {
-            if (osaHighSeveritiesThreshold >= 0 && osaSummaryResults.getHighVulnerabilities() > osaHighSeveritiesThreshold) {
-                res.append("OSA high severity results are above threshold. Results: ").append(osaSummaryResults.getHighVulnerabilities()).append(". Threshold: ").append(osaHighSeveritiesThreshold).append("\n");
+            if (osaHighSeveritiesThreshold >= 0 && osaSummaryResults.getTotalHighVulnerabilities() > osaHighSeveritiesThreshold) {
+                res.append("OSA high severity results are above threshold. Results: ").append(osaSummaryResults.getTotalHighVulnerabilities()).append(". Threshold: ").append(osaHighSeveritiesThreshold).append("\n");
                 fail = true;
             }
 
-            if (osaMediumSeveritiesThreshold >= 0 && osaSummaryResults.getMediumVulnerabilities() > osaMediumSeveritiesThreshold) {
-                res.append("OSA medium severity results are above threshold. Results: ").append(osaSummaryResults.getMediumVulnerabilities()).append(". Threshold: ").append(osaMediumSeveritiesThreshold).append("\n");
+            if (osaMediumSeveritiesThreshold >= 0 && osaSummaryResults.getTotalMediumVulnerabilities() > osaMediumSeveritiesThreshold) {
+                res.append("OSA medium severity results are above threshold. Results: ").append(osaSummaryResults.getTotalMediumVulnerabilities()).append(". Threshold: ").append(osaMediumSeveritiesThreshold).append("\n");
                 fail = true;
             }
 
-            if (osaLowSeveritiesThreshold >= 0 && osaSummaryResults.getLowVulnerabilities() > osaLowSeveritiesThreshold) {
-                res.append("OSA low severity results are above threshold. Results: ").append(osaSummaryResults.getLowVulnerabilities()).append(". Threshold: ").append(osaLowSeveritiesThreshold).append("\n");
+            if (osaLowSeveritiesThreshold >= 0 && osaSummaryResults.getTotalLowVulnerabilities() > osaLowSeveritiesThreshold) {
+                res.append("OSA low severity results are above threshold. Results: ").append(osaSummaryResults.getTotalLowVulnerabilities()).append(". Threshold: ").append(osaLowSeveritiesThreshold).append("\n");
                 fail = true;
             }
         }
