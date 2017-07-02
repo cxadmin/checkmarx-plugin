@@ -171,7 +171,9 @@ public class CxRestClient {
 
     private void validateResponse(Response response, Response.Status expectedStatus, String message) throws CxClientException {
         if (response.getStatus() != expectedStatus.getStatusCode()) {
-            throw new CxClientException(message + ": " + response.getStatusInfo().toString());
+            String responseBody = response.readEntity(String.class);
+            responseBody = responseBody.replace("{", "").replace("}", "").replace(System.lineSeparator(), " ").replace("  ", "");
+            throw new CxClientException(message + ": " + "status code: " + response.getStatus() + ". error:" + responseBody);
         }
     }
 

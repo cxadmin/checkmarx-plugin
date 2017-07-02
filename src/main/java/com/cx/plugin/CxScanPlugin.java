@@ -279,7 +279,7 @@ public class CxScanPlugin extends AbstractMojo {
                     osaScan = cxClientService.createOSAScan(createScanResponse.getProjectId(), zipForOSA);
                     log.info("OSA scan created successfully");
                 } catch (Exception e) {
-                    log.warn("Failed to create OSA scan: " + e.getMessage());
+                    log.warn(e.getMessage());
                     osaCreateException = e;
                 }
 
