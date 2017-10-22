@@ -226,13 +226,14 @@
       </properties>
     </developer>
     <developer>
-      <name>Gal Nussbaum</name>
+      <name>Gal Or Nussbaum</name>
       <email>gal.nussbaum@checkmarx.com</email>
       <organization>Checkmarx</organization>
       <organizationUrl>https://www.checkmarx.com/</organizationUrl>
       <roles>
         <role>Developer</role>
         <role>Automation Expert</role>
+        <role>Designer</role>
       </roles>
       <properties>
         <picUrl>http://i.imgur.com/SSm4Onr.jpg</picUrl>

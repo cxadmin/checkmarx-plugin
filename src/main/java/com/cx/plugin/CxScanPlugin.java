@@ -16,6 +16,7 @@ import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -227,6 +228,7 @@ public class CxScanPlugin extends AbstractMojo {
     private ZipArchiver zipArchiver;
     private CxClientService cxClientService;
     private ObjectMapper objectMapper = new ObjectMapper();
+    private String pluginVersion;
 
     private String scanResultsUrl;
     private String projectStateLink;
@@ -242,6 +244,10 @@ public class CxScanPlugin extends AbstractMojo {
 
         try {
 
+            PluginDescriptor pd = (PluginDescriptor)getPluginContext().get("pluginDescriptor");
+            if(pd != null) {
+                pluginVersion = pd.getVersion();
+            }
             printConfiguration();
             //initialize cx client
             log.debug("Initializing Cx client");
@@ -387,6 +393,7 @@ public class CxScanPlugin extends AbstractMojo {
 
     private void printConfiguration() {
         log.info("----------------------------Configurations:-----------------------------");
+        log.info("plugin version: " + pluginVersion);
         log.info("username: " + username);
         log.info("url: " + url);
         log.info("projectName: " + projectName);
@@ -661,27 +668,27 @@ public class CxScanPlugin extends AbstractMojo {
 
     private void printLogo() {
 
-        log.info("                                       \n" +
-                "          `..................`          \n" +
-                "      -ohdmmmmmmmmmmmmmmmmmmmmmhs/`     \n" +
-                "    -ymmmmmmmmmmmmmmmmmmmmmmmmmmmmd+    \n" +
-                "   :mmmmmmmdhhhhhhhhhhhhhhhhdmmmmmmms   \n" +
-                "  `dmmmmms.                  `smmmmmm.  \n" +
-                "  -mmmmmm`                   .smmmmmm.  \n" +
-                "  -mmmmmm`    .:-`        `/ymmmmmmm+   \n" +
-                "  -mmmmmm`  .hmmmd+     :sdmmmmmmmh:    \n" +
-                "  -mmmmmm`  /mmmmmmh--odmmmmmmmds-      \n" +
-                "  -mmmmmm`   /dmmmmmmmmmmmmmmy:`        \n" +
-                "  -mmmmmm`    `smmmmmmmmmmy/`   `--`    \n" +
-                "  -mmmmmm`      -hmmmmmh+.     +dmmms`  \n" +
-                "  -mmmmmm`        /os+-       `dmmmmm-  \n" +
-                "  .mmmmmm/                    /mmmmmm.  \n" +
-                "   ommmmmmhsooooooooooooooooshmmmmmmo   \n" +
-                "    +dmmmmmmmmmmmmmmmmmmmmmmmmmmmmd+    \n" +
-                "     `+hmmmmmmmmmmmmmmmmmmmmmmmmh+.     \n" +
-                "        `-////////////////////-`        \n" +
-                "                                        \n" +
-                "            C H E C K M A R X           \n");
+        //design by Gal Nussbaum <gal.nussbaum@checkmarx.com>
+        log.info(
+                "         CxCxCxCxCxCxCxCxCxCxCxC            \n" +
+                "        CxCxCxCxCxCxCxCxCxCxCxCxCx          \n" +
+                "       CxCxCxCxCxCxCxCxCxCxCxCxCxCx         \n" +
+                "      CxCxCx                CxCxCxCx        \n" +
+                "      CxCxCx                CxCxCxCx        \n" +
+                "      CxCxCx  CxCxCx      CxCxCxCxC         \n" +
+                "      CxCxCx  xCxCxCx  .CxCxCxCxCx          \n" +
+                "      CxCxCx   xCxCxCxCxCxCxCxCx            \n" +
+                "      CxCxCx    xCxCxCxCxCxCx               \n" +
+                "      CxCxCx     CxCxCxCxCx   CxCxCx        \n" +
+                "      CxCxCx       xCxCxC     CxCxCx        \n" +
+                "      CxCxCx                 CxCxCx         \n" +
+                "       CxCxCxCxCxCxCxCxCxCxCxCxCxCx         \n" +
+                "        CxCxCxCxCxCxCxCxCxCxCxCxCx          \n" +
+                "          CxCxCxCxCxCxCxCxCxCxCx            \n" +
+                "                                            \n" +
+                "            C H E C K M A R X               \n"
+        );
+
     }
 
 
