@@ -670,6 +670,7 @@ public class CxScanPlugin extends AbstractMojo {
 
         //design by Gal Nussbaum <gal.nussbaum@checkmarx.com>
         log.info(
+                "                                            \n" +
                 "         CxCxCxCxCxCxCxCxCxCxCxC            \n" +
                 "        CxCxCxCxCxCxCxCxCxCxCxCxCx          \n" +
                 "       CxCxCxCxCxCxCxCxCxCxCxCxCxCx         \n" +
