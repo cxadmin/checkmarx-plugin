@@ -8,6 +8,7 @@ import com.cx.client.rest.dto.CreateOSAScanResponse;
 import com.cx.client.rest.dto.Library;
 import com.cx.client.rest.dto.OSASummaryResults;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
@@ -34,10 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -49,7 +47,6 @@ public class CxScanPlugin extends AbstractMojo {
     private static Logger log = LoggerFactory.getLogger(CxScanPlugin.class);
 
     public static final String SOURCES_ZIP_NAME = "sources";
-    public static final String OSA_ZIP_NAME = "OSAScan";
     public static final String PDF_REPORT_NAME = "CxReport";
     public static final String OSA_REPORT_NAME = "OSAReport";
     public static final String OSA_LIBRARIES_NAME = "OSALibraries";
@@ -280,9 +277,9 @@ public class CxScanPlugin extends AbstractMojo {
                 try {
                     log.info("Creating OSA scan");
                     log.info("Zipping dependencies");
-                    File zipForOSA = createZipForOSA();
+                    List<OSAFile> osaSha1s = createOSASha1s();
                     log.info("Sending OSA scan request");
-                    osaScan = cxClientService.createOSAScan(createScanResponse.getProjectId(), zipForOSA);
+                    osaScan = cxClientService.createOSAScan(createScanResponse.getProjectId(), osaSha1s);
                     log.info("OSA scan created successfully");
                 } catch (Exception e) {
                     log.warn(e.getMessage());
@@ -629,32 +626,27 @@ public class CxScanPlugin extends AbstractMojo {
     }
 
 
-    private File createZipForOSA() throws MojoExecutionException {
+    private List<OSAFile> createOSASha1s() throws MojoExecutionException {
+
+        List<OSAFile> ret = new ArrayList<OSAFile>();
 
         Set artifacts = project.getArtifacts();
         for (Object arti : artifacts) {
             Artifact a = (Artifact) arti;
             if (!isExcludedFromOSA(a)) {
-                zipArchiver.addFile(a.getFile(), a.getGroupId() + "." + a.getFile().getName());
+                addSha1(a.getFile(), ret);
             }
         }
-
-        File ret = new File(outputDirectory, OSA_ZIP_NAME + ".zip");
-        zipArchiver.setDestFile(ret);
-        try {
-            if (zipArchiver.getFiles().isEmpty()) {
-                log.info("No dependencies found to zip.");
-                CxPluginHelper.createEmptyZip(ret);
-            } else {
-                zipArchiver.createArchive();
-                log.info("Files for OSA scan zip location: " + outputDirectory + File.separator + OSA_ZIP_NAME + ".zip");
-            }
-        } catch (Exception e) {
-            throw new MojoExecutionException("Failed to zip files for OSA scan: " + e.getMessage(), e);
-        }
-
         return ret;
+    }
 
+    private void addSha1(File file, List<OSAFile> ret) {
+        try {
+            String sha1 = DigestUtils.shaHex(FileUtils.readFileToByteArray(file));
+            ret.add(new OSAFile(file.getName(), sha1));
+        } catch (IOException e) {
+            log.warn("Failed to calculate sha1 for file: ["+file.getName()+"]: " + e.getMessage());
+        }
     }
 
     private boolean isExcludedFromOSA(Artifact a) {

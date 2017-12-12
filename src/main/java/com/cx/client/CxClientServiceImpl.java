@@ -1,10 +1,7 @@
 package com.cx.client;
 
 import com.checkmarx.v7.*;
-import com.cx.client.dto.CreateScanResponse;
-import com.cx.client.dto.LocalScanConfiguration;
-import com.cx.client.dto.ReportType;
-import com.cx.client.dto.ScanResults;
+import com.cx.client.dto.*;
 import com.cx.client.exception.CxClientException;
 import com.cx.client.rest.CxRestClient;
 import com.cx.client.rest.dto.*;
@@ -14,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.xml.namespace.QName;
 import javax.xml.ws.BindingProvider;
-import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -349,9 +345,9 @@ public class CxClientServiceImpl implements CxClientService {
         }
     }
 
-    public CreateOSAScanResponse createOSAScan(long projectId, File zipFile) throws CxClientException {
+    public CreateOSAScanResponse createOSAScan(long projectId, List<OSAFile> sha1s) throws CxClientException {
         restClient.login();
-        return restClient.createOSAScan(projectId, zipFile);
+        return restClient.createOSAScan(projectId, sha1s);
     }
 
 

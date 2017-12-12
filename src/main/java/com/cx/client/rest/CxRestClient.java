@@ -3,21 +3,18 @@ package com.cx.client.rest;
 
 import com.cx.client.CxPluginHelper;
 import com.cx.client.dto.LoginRequest;
+import com.cx.client.dto.OSAFile;
 import com.cx.client.exception.CxClientException;
 import com.cx.client.rest.dto.*;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import org.glassfish.jersey.media.multipart.MultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.util.ArrayList;
@@ -34,13 +31,12 @@ public class CxRestClient {
     private Client client;
     private WebTarget root;
 
-    public static final String OSA_SCAN_PROJECT_PATH = "projects/{projectId}/scans";
+    public static final String OSA_SCAN_PROJECT_PATH = "osa/scans";
     public static final String OSA_SCAN_STATUS_PATH = "osa/scans/{scanId}";
     public static final String OSA_SCAN_SUMMARY_PATH = "osa/reports";
     public static final String OSA_SCAN_LIBRARIES_PATH = "/osa/libraries";
     public static final String OSA_SCAN_VULNERABILITIES_PATH = "/osa/vulnerabilities";
     private static final String AUTHENTICATION_PATH = "auth/login";
-    public static final String OSA_ZIPPED_FILE_KEY_NAME = "OSAZippedSourceCode";
     private static final String ROOT_PATH = "CxRestAPI";
     public static final String CSRF_TOKEN_HEADER = "CXCSRFToken";
     public static final long MAX_ITEMS = 1000000;
@@ -87,7 +83,7 @@ public class CxRestClient {
     public CxRestClient(String hostname, String username, String password) {
         this.username = username;
         this.password = password;
-        client = ClientBuilder.newBuilder().register(clientRequestFilter).register(clientResponseFilter).register(MultiPartFeature.class).build();
+        client = ClientBuilder.newBuilder().register(clientRequestFilter).register(clientResponseFilter).build();
         root = client.target(hostname).path(ROOT_PATH);
     }
 
@@ -113,16 +109,13 @@ public class CxRestClient {
         validateResponse(response, Response.Status.OK, "Failed to login");
     }
 
-    public CreateOSAScanResponse createOSAScan(long projectId, File zipFile) throws CxClientException {
+    public CreateOSAScanResponse createOSAScan(long projectId, List<OSAFile> sha1s) throws CxClientException {
 
-        MultiPart multiPart = new MultiPart();
-        multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
 
-        FileDataBodyPart fileDataBodyPart = new FileDataBodyPart(OSA_ZIPPED_FILE_KEY_NAME, zipFile, MediaType.APPLICATION_OCTET_STREAM_TYPE);
-        multiPart.bodyPart(fileDataBodyPart);
+        CreateOSAScanRequest requestBody = new CreateOSAScanRequest(projectId, "Maven", sha1s);
 
-        Response response = root.path(OSA_SCAN_PROJECT_PATH).resolveTemplate("projectId", projectId).request(MediaType.APPLICATION_JSON_TYPE)
-                .post(Entity.entity(multiPart, multiPart.getMediaType()));
+        Response response = root.path(OSA_SCAN_PROJECT_PATH).request()
+                .post(Entity.entity(requestBody, MediaType.APPLICATION_JSON_TYPE));
 
         validateResponse(response, Response.Status.ACCEPTED, "Failed to create OSA scan");
 
