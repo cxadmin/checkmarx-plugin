@@ -40,9 +40,9 @@ public class CxRestClient {
     private static final String ROOT_PATH = "CxRestAPI";
     public static final String CSRF_TOKEN_HEADER = "CXCSRFToken";
     public static final long MAX_ITEMS = 1000000;
-    private static ArrayList<Object> cookies;
-    private static String csrfToken;
-    ObjectMapper mapper = new ObjectMapper();
+    private ArrayList<Object> cookies;
+    private String csrfToken;
+    private ObjectMapper mapper = new ObjectMapper();
 
     private static final Logger log = LoggerFactory.getLogger(CxRestClient.class);
 
@@ -76,6 +76,10 @@ public class CxRestClient {
             if (csrfToken != null) {
                 clientRequestContext.getHeaders().putSingle(CSRF_TOKEN_HEADER, csrfToken);
             }
+
+            Object contentType = clientRequestContext.getHeaders().getFirst("Content-Type");
+            String header = contentType == null ? "v=1" : contentType + ";v=1";
+            clientRequestContext.getHeaders().putSingle("Content-Type", header);
         }
     };
 
