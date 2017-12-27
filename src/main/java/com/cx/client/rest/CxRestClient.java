@@ -76,10 +76,6 @@ public class CxRestClient {
             if (csrfToken != null) {
                 clientRequestContext.getHeaders().putSingle(CSRF_TOKEN_HEADER, csrfToken);
             }
-
-            Object contentType = clientRequestContext.getHeaders().getFirst("Content-Type");
-            String header = contentType == null ? "v=1" : contentType + ";v=1";
-            clientRequestContext.getHeaders().putSingle("Content-Type", header);
         }
     };
 
