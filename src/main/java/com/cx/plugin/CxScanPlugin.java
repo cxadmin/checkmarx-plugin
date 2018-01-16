@@ -276,7 +276,7 @@ public class CxScanPlugin extends AbstractMojo {
             if (osaEnabled) {
                 try {
                     log.info("Creating OSA scan");
-                    log.info("Zipping dependencies");
+                    log.info("Scanning for dependencies");
                     List<OSAFile> osaSha1s = createOSASha1s();
                     log.info("Sending OSA scan request");
                     osaScan = cxClientService.createOSAScan(createScanResponse.getProjectId(), osaSha1s);
