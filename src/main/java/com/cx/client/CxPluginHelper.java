@@ -27,7 +27,6 @@ import java.security.cert.X509Certificate;
  */
 public abstract class CxPluginHelper {
 
-    public static final String HTML_TEMPLATE_LOCATION = "com/cx/plugin/htmlReportTemplate.html";
     private static final Logger log = LoggerFactory.getLogger(CxPluginHelper.class);
 
     public static ScanResults genScanResponse(ProjectScannedDisplayData scanDisplayData) {
@@ -72,25 +71,6 @@ public abstract class CxPluginHelper {
         return cliScanArgs;
     }
 
-    public static String compileHtmlReport(String csv, int highThreshold, int mediumThreshold, int lowThreshold) {
-
-        String ret = null;
-        ClassLoader classLoader = CxPluginHelper.class.getClassLoader();
-        try {
-            String htmlTemplate = IOUtils.toString(classLoader.getResourceAsStream(HTML_TEMPLATE_LOCATION), Charset.defaultCharset());
-            htmlTemplate = htmlTemplate.replace("*RESULTS_CSV*", csv.replace("\uFEFF", "").replace("\'", "").replace("\"\"\"\"", "").replace("\r\n", "~~'+\n' "));
-            ret = htmlTemplate.replace("*RESULTS_THRESHOLD*", highThreshold + "," + mediumThreshold + "," + lowThreshold);
-
-        } catch (IOException e) {
-            log.debug("Failed to get HTML template from: " +HTML_TEMPLATE_LOCATION, e);
-        } catch (Exception e) {
-            log.debug("Failed to compile HTML report. exception: ", e);
-        }
-
-        return ret;
-
-    }
-
     public static String composeScanLink(String url, ScanResults scanResults) {
         return String.format( url + "/CxWebClient/ViewerMain.aspx?scanId=%s&ProjectID=%s", scanResults.getScanID(), scanResults.getProjectId());
     }
@@ -99,26 +79,12 @@ public abstract class CxPluginHelper {
         return String.format( url + "/CxWebClient/portal#/projectState/%s/Summary", projectId);
     }
 
-    public static String convertArrayToString(String[] array){
-        return StringUtils.join(array, ',');
+    public static String composeOSAScanLink(String url, long projectId) {
+        return url + "/CxWebClient/SPA/#/viewer/project/" + projectId;
     }
 
-    public static void createEmptyZip(File zipFile) throws IOException {
-
-        FileOutputStream os = null;
-        try {
-            os = new FileOutputStream(zipFile);
-            byte[] ioe = new byte[22];
-            ioe[0] = 80;
-            ioe[1] = 75;
-            ioe[2] = 5;
-            ioe[3] = 6;
-            os.write(ioe);
-            os.close();
-            os = null;
-        } finally {
-            IOUtils.closeQuietly(os);
-        }
+    public static String convertArrayToString(String[] array){
+        return StringUtils.join(array, ',');
     }
 
     public static void disableSSLCertificateVerification() {

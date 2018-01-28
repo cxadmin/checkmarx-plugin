@@ -308,9 +308,6 @@ public class CxScanPlugin extends AbstractMojo {
 
                 printResultsToConsole(scanResults);
 
-    /*            log.info("Generating HTML Report");
-                generateHTMLReport(scanResults.getScanID());*/
-
                 //create scan report
                 if (generatePDFReport) {
                     createPDFReport(scanResults.getScanID());
@@ -334,22 +331,9 @@ public class CxScanPlugin extends AbstractMojo {
                 log.info("OSA scan finished successfully");
                 log.info("Creating OSA reports");
                 osaSummaryResults = cxClientService.retrieveOSAScanSummaryResults(osaScan.getScanId());
-                printOSAResultsToConsole(osaSummaryResults);
+                printOSAResultsToConsole(osaSummaryResults, createScanResponse.getProjectId());
 
                 String now = DateFormatUtils.format(new Date(), "dd_MM_yyyy-HH_mm_ss");
-                if (osaGeneratePDFReport) {
-                    byte[] osaPDF = cxClientService.retrieveOSAScanPDFResults(osaScan.getScanId());
-                    String pdfFileName = OSA_REPORT_NAME + "_" + now + ".pdf";
-                    FileUtils.writeByteArrayToFile(new File(outputDirectory, pdfFileName), osaPDF);
-                    log.info("OSA PDF report location: " + outputDirectory + File.separator + pdfFileName);
-                }
-
-                if (osaGenerateHTMLReport) {
-                    String osaHtml = cxClientService.retrieveOSAScanHtmlResults(osaScan.getScanId());
-                    String htmlFileName = OSA_REPORT_NAME + "_" + now + ".html";
-                    FileUtils.writeStringToFile(new File(outputDirectory, htmlFileName), osaHtml, Charset.defaultCharset());
-                    log.info("OSA HTML report location: " + outputDirectory + File.separator + htmlFileName);
-                }
 
                 if(osaGenerateJsonReport) {
                     //create json files
@@ -431,7 +415,7 @@ public class CxScanPlugin extends AbstractMojo {
     }
 
 
-    private void printOSAResultsToConsole(OSASummaryResults osaSummaryResults) {
+    private void printOSAResultsToConsole(OSASummaryResults osaSummaryResults, long projectId) {
         log.info("----------------------------Checkmarx Scan Results(CxOSA):-------------------------------");
         log.info("");
         log.info("------------------------");
@@ -450,36 +434,8 @@ public class CxScanPlugin extends AbstractMojo {
         log.info("Vulnerable and updated: " + osaSummaryResults.getVulnerableAndUpdated());
         log.info("Non-vulnerable libraries: " + osaSummaryResults.getNonVulnerableLibraries());
         log.info("");
-        log.info("OSA scan results location: " + projectStateLink.replace("Summary", "OSA"));
+        log.info("OSA scan results location: " + url + "/CxWebClient/SPA/#/viewer/project/" + projectId);
         log.info("------------------------------------------------------------------------");
-    }
-
-
-    private void generateHTMLReport(long scanId) {
-
-        try {
-            byte[] scanReport = cxClientService.getScanReport(scanId, ReportType.CSV);
-            String csv = new String(scanReport);
-
-            String now = DateFormatUtils.format(new Date(), "dd_MM_yyyy-HH_mm_ss");
-            String htmlFileName = "report" + "_" + now + ".html";
-            File htmlReportFile = new File(outputDirectory + File.separator + htmlFileName);
-
-            String html = CxPluginHelper.compileHtmlReport(csv, highSeveritiesThreshold, mediumSeveritiesThreshold, lowSeveritiesThreshold);
-
-            if (html != null) {
-                FileUtils.writeStringToFile(htmlReportFile, html, Charset.defaultCharset());
-                log.info("HTML report location: " + outputDirectory + File.separator+ htmlFileName);
-            } else {
-                log.warn("Failed to generate HTML report");
-            }
-
-
-        } catch (Exception e) {
-            log.warn("Failed to generate HTML report");
-            log.debug("Failed to generate HTML report: ", e);
-        }
-
     }
 
     private LocalScanConfiguration generateScanConfiguration(byte[] zippedSources) {

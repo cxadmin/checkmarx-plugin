@@ -76,6 +76,11 @@ public class CxRestClient {
             if (csrfToken != null) {
                 clientRequestContext.getHeaders().putSingle(CSRF_TOKEN_HEADER, csrfToken);
             }
+
+            Object contentType = clientRequestContext.getHeaders().getFirst("Content-Type");
+            String header = contentType == null ? "v=1" : contentType + ";v=1";
+            clientRequestContext.getHeaders().putSingle("Content-Type", header);
+
         }
     };
 
@@ -134,12 +139,6 @@ public class CxRestClient {
         return convertToObject(response, OSASummaryResults.class);
     }
 
-    public String getOSAScanHtmlResults(String scanId) throws CxClientException {
-        Response response = root.path(OSA_SCAN_SUMMARY_PATH).queryParam("scanId", scanId).request(MediaType.TEXT_HTML).get();
-        validateResponse(response, Response.Status.OK, "Failed to get OSA scan HTML results");
-        return response.readEntity(String.class);
-    }
-
     public List<Library> getOSALibraries(String scanId) throws CxClientException {
         Response response = root.path(OSA_SCAN_LIBRARIES_PATH).queryParam("scanId", scanId)
                 .queryParam("itemsPerPage", MAX_ITEMS).request(MediaType.APPLICATION_JSON).get();
@@ -154,12 +153,6 @@ public class CxRestClient {
 
         validateResponse(response, Response.Status.OK, "Failed to get OSA vulnerabilities");
         return convertToObject(response, TypeFactory.defaultInstance().constructCollectionType(List.class, CVE.class));
-    }
-
-    public byte[] getOSAScanPDFResults(String scanId) throws CxClientException {
-        Response response = root.path(OSA_SCAN_SUMMARY_PATH).queryParam("scanId", scanId).request("application/pdf").get();
-        validateResponse(response, Response.Status.OK, "Failed to get OSA scan PDF results");
-        return response.readEntity(byte[].class);
     }
 
     private void validateResponse(Response response, Response.Status expectedStatus, String message) throws CxClientException {

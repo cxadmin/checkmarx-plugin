@@ -19,6 +19,8 @@ public class CVE {
     String recommendations;//:"recommendation 1",
     String sourceFileName;//:"SourceFileName 1",
     String libraryId;//:"36b32b00-9ee6-4e2f-85c9-3f03f26519a9"
+    State state;
+    Integer commentsAmount;
 
     public String getLibraryId() {
         return libraryId;
@@ -99,4 +101,52 @@ public class CVE {
     public void setId(String id) {
         this.id = id;
     }
+
+    public State getState() {
+        return state;
+    }
+
+    public void setState(State state) {
+        this.state = state;
+    }
+
+    public Integer getCommentsAmount() {
+        return commentsAmount;
+    }
+
+    public void setCommentsAmount(Integer commentsAmount) {
+        this.commentsAmount = commentsAmount;
+    }
 }
+
+class State {
+
+    Integer id;
+    String actionType;
+    String name;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getActionType() {
+        return actionType;
+    }
+
+    public void setActionType(String actionType) {
+        this.actionType = actionType;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+

@@ -45,11 +45,7 @@ public interface CxClientService {
     List<Library> getOSALibraries(String scanId) throws CxClientException;
 
     List<CVE> getOSAVulnerabilities(String scanId) throws CxClientException;
-
-    String retrieveOSAScanHtmlResults(String scanId) throws CxClientException;
-
-    byte[] retrieveOSAScanPDFResults(String scanId) throws CxClientException;
-
+    
     byte[] getScanReport(long scanId, ReportType reportType) throws CxClientException;
 
     void disableSSLCertificateVerification();
