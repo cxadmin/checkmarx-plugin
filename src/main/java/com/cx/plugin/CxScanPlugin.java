@@ -34,7 +34,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.*;
 
 
@@ -48,7 +47,6 @@ public class CxScanPlugin extends AbstractMojo {
 
     public static final String SOURCES_ZIP_NAME = "sources";
     public static final String PDF_REPORT_NAME = "CxReport";
-    public static final String OSA_REPORT_NAME = "OSAReport";
     public static final String OSA_LIBRARIES_NAME = "OSALibraries";
     public static final String OSA_VULNERABILITIES_NAME = "OSAVulnerabilities";
     public static final String OSA_SUMMARY_NAME = "OSASummary";
