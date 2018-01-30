@@ -394,8 +394,6 @@ public class CxScanPlugin extends AbstractMojo {
             log.info("osaHighSeveritiesThreshold: " + (osaHighSeveritiesThreshold < 0 ? "[No Threshold]" : osaHighSeveritiesThreshold));
             log.info("osaMediumSeveritiesThreshold: " + (osaMediumSeveritiesThreshold < 0 ? "[No Threshold]" : osaMediumSeveritiesThreshold));
             log.info("osaLowSeveritiesThreshold: " + (osaLowSeveritiesThreshold < 0 ? "[No Threshold]" : osaLowSeveritiesThreshold));
-            log.info("osaGeneratePDFReport: " + osaGeneratePDFReport);
-            log.info("osaGenerateHTMLReport: " + osaGenerateHTMLReport);
             log.info("osaGenerateJsonReport: " + osaGenerateJsonReport);
         }
         log.info("------------------------------------------------------------------------");
