@@ -8,11 +8,10 @@ import com.cx.client.rest.dto.CreateOSAScanResponse;
 import com.cx.client.rest.dto.Library;
 import com.cx.client.rest.dto.OSASummaryResults;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
-import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -28,13 +27,18 @@ import org.codehaus.plexus.archiver.zip.ZipArchiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.impl.MavenLoggerAdapter;
+import org.whitesource.fs.ComponentScan;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.*;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Properties;
 
 
 /**
@@ -158,8 +162,17 @@ public class CxScanPlugin extends AbstractMojo {
      * List of Maven dependencies that will not be included in CxOSA.
      * An exclusion should be of the form: groupId.artifactId
      */
+    //todo remove this parameter in 2019
+    @Deprecated
     @Parameter(property = "cx.osaExclusions")
     private String[] osaExclusions = new String[0];
+
+    /**
+     * List of Maven scopes to be ignored in CxOSA scan
+     * test and provided scopes are ignored by default unless configured otherwise
+     */
+    @Parameter(property = "cx.osaIgnoreScopes")
+    private String[] osaIgnoreScopes = new String[0];
 
     /**
      * Configure a threshold for the CxOSA High Severity Vulnerabilities.
@@ -272,18 +285,24 @@ public class CxScanPlugin extends AbstractMojo {
 
             CreateOSAScanResponse osaScan = null;
             if (osaEnabled) {
+                File dummyFileForOSA = null;
                 try {
                     log.info("Creating OSA scan");
                     log.info("Scanning for dependencies");
-                    List<OSAFile> osaSha1s = createOSASha1s();
+                    dummyFileForOSA = createDummyFileForOSA();
+                    Properties scannerProperties = CxPluginHelper.generateOSAScanConfiguration(project.getBasedir().getAbsolutePath(), osaIgnoreScopes, dummyFileForOSA.getName());
+                    ComponentScan componentScan = new ComponentScan(scannerProperties);
+                    String osaDependenciesJson = componentScan.scan();
+                    writeDependenciesJsonToFile(osaDependenciesJson);
                     log.info("Sending OSA scan request");
-                    osaScan = cxClientService.createOSAScan(createScanResponse.getProjectId(), osaSha1s);
+                    osaScan = cxClientService.createOSAScan(createScanResponse.getProjectId(), osaDependenciesJson);
                     log.info("OSA scan created successfully");
                 } catch (Exception e) {
                     log.warn(e.getMessage());
                     osaCreateException = e;
+                } finally {
+                    FileUtils.deleteQuietly(dummyFileForOSA);
                 }
-
             }
 
             if (!isSynchronous) {
@@ -336,17 +355,17 @@ public class CxScanPlugin extends AbstractMojo {
                 if(osaGenerateJsonReport) {
                     //create json files
                     String fileName =  OSA_SUMMARY_NAME + "_" + now + ".json";
-                    objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(outputDirectory, fileName), osaSummaryResults);
+                    writeJsonToFile(osaSummaryResults, fileName);
                     log.info("OSA summary json location: " + outputDirectory + File.separator + fileName);
 
                     List<Library> libraries = cxClientService.getOSALibraries(osaScan.getScanId());
                     fileName = OSA_LIBRARIES_NAME + "_" + now + ".json";
-                    objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(outputDirectory, fileName), libraries);
+                    writeJsonToFile(libraries, fileName);
                     log.info("OSA libraries json location: " + outputDirectory + File.separator + fileName);
 
                     List<CVE> osaVulnerabilities = cxClientService.getOSAVulnerabilities(osaScan.getScanId());
                     fileName =  OSA_VULNERABILITIES_NAME + "_" + now + ".json";
-                    objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(outputDirectory, fileName), osaVulnerabilities);
+                    writeJsonToFile(osaVulnerabilities, fileName);
                     log.info("OSA vulnerabilities json location: " + outputDirectory + File.separator + fileName);
                 }
 
@@ -370,6 +389,34 @@ public class CxScanPlugin extends AbstractMojo {
         assertVulnerabilities(scanResults, osaSummaryResults);
     }
 
+    private File createDummyFileForOSA() throws IOException {
+        String dummyFilename = "dummy" + RandomStringUtils.randomNumeric(4) + ".java";
+        File file = new File(project.getBasedir().getAbsolutePath(), dummyFilename);
+        file.createNewFile();
+        return file;
+    }
+
+    private void writeDependenciesJsonToFile(String osaDependenciesJson) {
+
+        try {
+            Object jsonObject = objectMapper.readValue(osaDependenciesJson, Object.class);
+            String indentedJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject);
+            File jsonFile = new File(outputDirectory, "OSADependencies.json");
+            FileUtils.writeStringToFile(jsonFile, indentedJson, Charset.defaultCharset());
+            log.info("OSA dependencies saved to file: ["+jsonFile+"]");
+
+        } catch (Exception e) {
+            log.warn("Failed to save osa dependencies json file: " + e.getMessage());
+        }
+
+    }
+
+    private void writeJsonToFile(Object o, String fileName) throws IOException {
+        String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
+        File jsonFile = new File(outputDirectory, fileName);
+        FileUtils.writeStringToFile(jsonFile, json, Charset.defaultCharset());
+    }
+
     private void printConfiguration() {
         log.info("----------------------------Configurations:-----------------------------");
         log.info("plugin version: " + pluginVersion);
@@ -390,7 +437,8 @@ public class CxScanPlugin extends AbstractMojo {
         log.info("outputDirectory: " + outputDirectory);
         log.info("osaEnabled: " + osaEnabled);
         if (osaEnabled) {
-            log.info("osaExclusions: " + Arrays.toString(osaExclusions));
+            log.warn("osaExclusions parameter is no longer supported. this configuration will be removed in the future");
+            log.info("osaExclusions: " + Arrays.toString(osaIgnoreScopes));
             log.info("osaHighSeveritiesThreshold: " + (osaHighSeveritiesThreshold < 0 ? "[No Threshold]" : osaHighSeveritiesThreshold));
             log.info("osaMediumSeveritiesThreshold: " + (osaMediumSeveritiesThreshold < 0 ? "[No Threshold]" : osaMediumSeveritiesThreshold));
             log.info("osaLowSeveritiesThreshold: " + (osaLowSeveritiesThreshold < 0 ? "[No Threshold]" : osaLowSeveritiesThreshold));
@@ -575,39 +623,6 @@ public class CxScanPlugin extends AbstractMojo {
         }
 
         return p;
-    }
-
-
-    private List<OSAFile> createOSASha1s() throws MojoExecutionException {
-
-        List<OSAFile> ret = new ArrayList<OSAFile>();
-
-        Set artifacts = project.getArtifacts();
-        for (Object arti : artifacts) {
-            Artifact a = (Artifact) arti;
-            if (!isExcludedFromOSA(a)) {
-                addSha1(a.getFile(), ret);
-            }
-        }
-        return ret;
-    }
-
-    private void addSha1(File file, List<OSAFile> ret) {
-        try {
-            String sha1 = DigestUtils.shaHex(FileUtils.readFileToByteArray(file));
-            ret.add(new OSAFile(file.getName(), sha1));
-        } catch (IOException e) {
-            log.warn("Failed to calculate sha1 for file: ["+file.getName()+"]: " + e.getMessage());
-        }
-    }
-
-    private boolean isExcludedFromOSA(Artifact a) {
-        for (String exclusion : osaExclusions) {
-            if ((a.getGroupId() + '.' + a.getArtifactId()).equals(exclusion)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void printLogo() {

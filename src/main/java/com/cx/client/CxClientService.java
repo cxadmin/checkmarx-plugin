@@ -36,7 +36,7 @@ public interface CxClientService {
 
     ScanResults retrieveScanResults(long projectId) throws CxClientException;
 
-    CreateOSAScanResponse createOSAScan(long projectId, List<OSAFile> sha1s) throws CxClientException;
+    CreateOSAScanResponse createOSAScan(long projectId, String osaDependenciesJson) throws CxClientException;
 
     OSAScanStatus waitForOSAScanToFinish(String scanId, long scanTimeoutInMin, ScanWaitHandler<OSAScanStatus> waitHandler) throws CxClientException;
 

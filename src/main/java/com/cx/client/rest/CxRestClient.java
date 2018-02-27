@@ -31,7 +31,7 @@ public class CxRestClient {
     private Client client;
     private WebTarget root;
 
-    public static final String OSA_SCAN_PROJECT_PATH = "osa/scans";
+    public static final String OSA_SCAN_PROJECT_PATH = "osa/inventory";
     public static final String OSA_SCAN_STATUS_PATH = "osa/scans/{scanId}";
     public static final String OSA_SCAN_SUMMARY_PATH = "osa/reports";
     public static final String OSA_SCAN_LIBRARIES_PATH = "/osa/libraries";
@@ -39,10 +39,13 @@ public class CxRestClient {
     private static final String AUTHENTICATION_PATH = "auth/login";
     private static final String ROOT_PATH = "CxRestAPI";
     public static final String CSRF_TOKEN_HEADER = "CXCSRFToken";
+    public static final String ORIGIN = "Maven";
+    public static final String ORIGIN_HEADER = "cxOrigin";
     public static final long MAX_ITEMS = 1000000;
     private ArrayList<Object> cookies;
     private String csrfToken;
     private ObjectMapper mapper = new ObjectMapper();
+
 
     private static final Logger log = LoggerFactory.getLogger(CxRestClient.class);
 
@@ -69,6 +72,8 @@ public class CxRestClient {
 
     private ClientRequestFilter clientRequestFilter = new ClientRequestFilter() {
         public void filter(ClientRequestContext clientRequestContext) throws IOException {
+
+            clientRequestContext.getHeaders().putSingle(ORIGIN_HEADER, ORIGIN);
             if (cookies != null) {
                 clientRequestContext.getHeaders().put("Cookie", cookies);
             }
@@ -114,15 +119,15 @@ public class CxRestClient {
         validateResponse(response, Response.Status.OK, "Failed to login");
     }
 
-    public CreateOSAScanResponse createOSAScan(long projectId, List<OSAFile> sha1s) throws CxClientException {
+    public CreateOSAScanResponse createOSAScan(long projectId, String osaDependenciesJson) throws CxClientException {
 
 
-        CreateOSAScanRequest requestBody = new CreateOSAScanRequest(projectId, "Maven", sha1s);
+        CreateOSAScanRequest requestBody = new CreateOSAScanRequest(projectId, osaDependenciesJson);
 
         Response response = root.path(OSA_SCAN_PROJECT_PATH).request()
                 .post(Entity.entity(requestBody, MediaType.APPLICATION_JSON_TYPE));
 
-        validateResponse(response, Response.Status.ACCEPTED, "Failed to create OSA scan");
+        validateResponse(response, Response.Status.CREATED, "Failed to create OSA scan");
 
         return convertToObject(response, CreateOSAScanResponse.class);
     }

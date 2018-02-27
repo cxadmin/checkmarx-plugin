@@ -345,9 +345,9 @@ public class CxClientServiceImpl implements CxClientService {
         }
     }
 
-    public CreateOSAScanResponse createOSAScan(long projectId, List<OSAFile> sha1s) throws CxClientException {
+    public CreateOSAScanResponse createOSAScan(long projectId, String osaDependenciesJson) throws CxClientException {
         restClient.login();
-        return restClient.createOSAScan(projectId, sha1s);
+        return restClient.createOSAScan(projectId, osaDependenciesJson);
     }
 
 

@@ -6,20 +6,16 @@ import com.checkmarx.v7.ProjectScannedDisplayData;
 import com.checkmarx.v7.ProjectSettings;
 import com.cx.client.dto.BaseScanConfiguration;
 import com.cx.client.dto.ScanResults;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Properties;
 
 /**
  * Created by: Dorg.
@@ -127,4 +123,18 @@ public abstract class CxPluginHelper {
 
     }
 
+    public static Properties generateOSAScanConfiguration(String scanFolder, String[] osaIgnoreScopes, String dummyFilename) {
+
+        Properties ret = new Properties();
+
+        ret.put("includes", dummyFilename);
+
+        if(osaIgnoreScopes != null && osaIgnoreScopes.length > 0) {
+            ret.put("maven.ignoredScopes", String.join(",", osaIgnoreScopes));
+        }
+        ret.put("d", scanFolder);
+
+        return ret;
+
+    }
 }
