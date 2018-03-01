@@ -162,7 +162,6 @@ public class CxScanPlugin extends AbstractMojo {
      * List of Maven dependencies that will not be included in CxOSA.
      * An exclusion should be of the form: groupId.artifactId
      */
-    //todo remove this parameter in 2019
     @Deprecated
     @Parameter(property = "cx.osaExclusions")
     private String[] osaExclusions = new String[0];
@@ -201,12 +200,14 @@ public class CxScanPlugin extends AbstractMojo {
     /**
      * If true, a CxOSA PDF report will be generated in the output directory.
      */
+    @Deprecated
     @Parameter(defaultValue = "true", property = "cx.osaGeneratePDFReport")
     private boolean osaGeneratePDFReport;
 
     /**
      * If true, a CxOSA HTML report will be generated in the output directory.
      */
+    @Deprecated
     @Parameter(defaultValue = "true", property = "cx.osaGenerateHTMLReport")
     private boolean osaGenerateHTMLReport;
 
@@ -437,8 +438,10 @@ public class CxScanPlugin extends AbstractMojo {
         log.info("outputDirectory: " + outputDirectory);
         log.info("osaEnabled: " + osaEnabled);
         if (osaEnabled) {
-            log.warn("osaExclusions parameter is no longer supported. this configuration will be removed in the future");
-            log.info("osaExclusions: " + Arrays.toString(osaIgnoreScopes));
+            log.warn("osaExclusions parameter is not supported in this version");
+            log.warn("osaGenerateHTMLReport parameter is not supported in this version");
+            log.warn("osaGeneratePDFReport parameter is not supported in this version");
+            log.info("osaIgnoreScopes: " + Arrays.toString(osaIgnoreScopes));
             log.info("osaHighSeveritiesThreshold: " + (osaHighSeveritiesThreshold < 0 ? "[No Threshold]" : osaHighSeveritiesThreshold));
             log.info("osaMediumSeveritiesThreshold: " + (osaMediumSeveritiesThreshold < 0 ? "[No Threshold]" : osaMediumSeveritiesThreshold));
             log.info("osaLowSeveritiesThreshold: " + (osaLowSeveritiesThreshold < 0 ? "[No Threshold]" : osaLowSeveritiesThreshold));
