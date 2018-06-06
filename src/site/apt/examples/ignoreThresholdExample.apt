@@ -22,7 +22,7 @@ Ignore Threshold
                     <configuration>
                         <username>admin@cx</username>
                         <password>Cx123456!</password>
-                        <url>http://10.31.1.114fff</url>
+                        <url>http://10.31.1.114</url>
                         <preset>All</preset>
                         <projectName>yissik</projectName>
                         <highSeveritiesThreshold>1</highSeveritiesThreshold>
