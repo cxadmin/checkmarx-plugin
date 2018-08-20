@@ -12,6 +12,7 @@ import org.codehaus.plexus.archiver.zip.ZipArchiver;
 import org.slf4j.Logger;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -142,12 +143,23 @@ public abstract class CxPluginUtils {
 
             //add sources
             List compileSourceRoots = subProject.getCompileSourceRoots();
-            for (Object c : compileSourceRoots) {
+            File sourceDir = subProject.getBasedir();//todo check if java not exist (source not exist)
 
-                File sourceDir = new File((String) c);
+            for (Object c : compileSourceRoots) {
+                sourceDir = new File((String) c);
                 if (sourceDir.exists()) {
                     zipArchiver.addDirectory(sourceDir, prefix);
                 }
+            }
+
+            //add webapp sources
+            File[] webappDir = sourceDir.getParentFile().listFiles(new FilenameFilter() {
+                public boolean accept(File directory, String fileName) {
+                    return fileName.endsWith("webapp");
+                }
+            });
+            if (webappDir.length > 0 && webappDir[0].exists()){
+                zipArchiver.addDirectory(webappDir[0], prefix);
             }
 
             //add resources
@@ -160,8 +172,16 @@ public abstract class CxPluginUtils {
                     zipArchiver.addDirectory(resourceDir, prefix);
                 }
             }
-        }
 
+            //add scripts
+            List scriptSourceRoots = subProject.getScriptSourceRoots();
+            for (Object c : scriptSourceRoots) {
+                File scriptDir = new File((String)c);
+                if (scriptDir.exists()) {
+                    zipArchiver.addDirectory(scriptDir, prefix);
+                }
+            }
+        }
 
         zipArchiver.setDestFile(new File(outputDirectory, SOURCES_ZIP_NAME + ".zip"));
         try {
