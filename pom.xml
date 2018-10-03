@@ -84,9 +84,9 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>com.checkmarx.client</groupId>
-            <artifactId>checkmarx-client</artifactId>
-            <version>8.80.0-20180606.140307-25</version>
+          <groupId>com.checkmarx</groupId>
+          <artifactId>cx-client-common</artifactId>
+          <version>8.80.0</version>
             <exclusions>
                 <exclusion>
                     <artifactId>jackson-databind</artifactId>
