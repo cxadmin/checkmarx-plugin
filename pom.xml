@@ -86,13 +86,7 @@
         <dependency>
           <groupId>com.checkmarx</groupId>
           <artifactId>cx-client-common</artifactId>
-          <version>8.80.0</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>jackson-databind</artifactId>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                </exclusion>
-            </exclusions>
+          <version>8.90.0</version>
         </dependency>
     </dependencies>
     <distributionManagement>
