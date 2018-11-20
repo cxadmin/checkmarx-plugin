@@ -2,13 +2,14 @@ package com.cx.plugin;
 
 import com.cx.plugin.dto.ScanResults;
 import com.cx.restclient.CxShragaClient;
+import com.cx.restclient.common.ShragaUtils;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.ThresholdResult;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -335,11 +336,12 @@ public class CxScanPlugin extends AbstractMojo {
                 }
             }
 
-            //assert if expected exception is thrown  OR when vulnerabilities under threshold
-            ThresholdResult thresholdResult = shraga.getThresholdResult();
-            if (thresholdResult.isFail() || ret.getSastWaitException() != null || ret.getSastCreateException() != null ||
-                    ret.getOsaCreateException() != null || ret.getOsaWaitException() != null) {
-                assertBuildFailure(thresholdResult.getFailDescription(), ret);
+            String buildFailureResult = ShragaUtils.getBuildFailureResult(config,ret.getSastResults(), ret.getOsaResults());
+            if (!StringUtils.isEmpty(buildFailureResult) || ret.getSastWaitException() != null || ret.getSastCreateException() != null ||
+                    ret.getOsaCreateException() != null || ret.getOsaWaitException() != null)
+            {
+                assertBuildFailure(buildFailureResult, ret);
+
             }
 
         } catch (
