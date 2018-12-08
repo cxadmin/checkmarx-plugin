@@ -158,7 +158,7 @@ public abstract class CxPluginUtils {
                     return fileName.endsWith("webapp");
                 }
             });
-            if (webappDir.length > 0 && webappDir[0].exists()){
+            if (webappDir != null && webappDir.length > 0 && webappDir[0].exists()){
                 zipArchiver.addDirectory(webappDir[0], prefix);
             }
 
