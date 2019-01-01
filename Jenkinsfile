@@ -19,7 +19,7 @@ pipeline {
         powershell '''#------------------------------------------------------------------------------------------------------------
 # REMOVE THE WORD SNAPSHOT (ONLY FOR RELEASE BUILDS)
 #------------------------------------------------------------------------------------------------------------
-
+$ENV:JOB_NAME
 [string]$IsReleaseBuild = $ENV:IsReleaseBuild
 [string]$RootPath = "C:\CI-Slave\workspace\$ENV:JOB_NAME"
 
