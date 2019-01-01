@@ -7,10 +7,10 @@ pipeline {
     node {
       label 'Plugins'
     }
-    tools {
+  }
+	
+  tools {
         jdk 'JDK_WINDOWS_1.8.0_92'
-    }
-
   }
   stages {
     stage('Remove Snapshot') {
