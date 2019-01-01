@@ -20,6 +20,7 @@ pipeline {
 # REMOVE THE WORD SNAPSHOT (ONLY FOR RELEASE BUILDS)
 #------------------------------------------------------------------------------------------------------------
 echo " $ENV:JOB_NAME"
+echo " ${env.JOB_NAME}"
 echo "----------------------tgdrererhyeryreyery--------------------------"
 [string]$IsReleaseBuild = $ENV:IsReleaseBuild
 [string]$RootPath = "C:\\CI-Slave\\workspace\\${env.JOB_NAME}"
