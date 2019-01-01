@@ -58,7 +58,7 @@ Else
 	  
     stage('Archive Artifacts') {
       steps {
-        archiveArtifacts 'target/*.jar'
+        archiveArtifacts 'build/target/*.zip'
       }
     }
 	  
