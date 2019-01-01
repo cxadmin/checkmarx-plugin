@@ -22,7 +22,7 @@ pipeline {
 $ENV:JOB_NAME
 echo "----------------------tgdrererhyeryreyery--------------------------"
 [string]$IsReleaseBuild = $ENV:IsReleaseBuild
-[string]$RootPath = "C:\CI-Slave\workspace\$ENV:JOB_NAME"
+[string]$RootPath = "C:\CI-Slave\workspace\${env.JOB_NAME}"
 
 
 If($IsReleaseBuild -eq "true")
