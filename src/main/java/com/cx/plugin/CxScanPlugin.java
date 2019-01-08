@@ -261,6 +261,17 @@ public class CxScanPlugin extends AbstractMojo {
                 shraga = new CxShragaClient(config, log);
                 shraga.init();
             } catch (Exception ex) {
+                if (ex.getMessage().contains("Server is unavailable")) {
+                    try {
+                        shraga.login();
+                    } catch (CxClientException e) {
+                        throw new IOException(e);
+                    }
+                    String errorMsg = "Connection Failed.\n" +
+                            "Possible reason: Plugin version incompatible with CxSAST v8.7 or lower.\n" +
+                            "If your CxSAST version is v8.8 or greater, please recheck connection details or contact support.";
+                    throw new MojoFailureException(ex.getMessage() + ": " + errorMsg);
+                }
                 throw new MojoFailureException(ex.getMessage(), ex);
             }
 

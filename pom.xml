@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.checkmarx.maven</groupId>
     <artifactId>checkmarx-maven-plugin</artifactId>
-    <version>8.90.1</version>
+    <version>8.90.2</version>
     <packaging>maven-plugin</packaging>
     <name>Checkmarx Maven Plugin</name>
     <description>Enables a maven project to integrate with Checkmarx SAST scan.</description>
