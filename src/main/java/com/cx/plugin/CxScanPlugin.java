@@ -262,6 +262,17 @@ public class CxScanPlugin extends AbstractMojo {
                 shraga = new CxShragaClient(config, log);
                 shraga.init();
             } catch (Exception ex) {
+                if (ex.getMessage().contains("Server is unavailable")) {
+                    try {
+                        shraga.login();
+                    } catch (CxClientException e) {
+                        throw new MojoFailureException(e.getMessage());
+                    }
+                    String errorMsg = "Connection Failed.\n" +
+                            "Validate the provided login credentials and server URL are correct.\n" +
+                            "In addition, make sure the installed plugin version is compatible with the CxSAST version according to CxSAST release notes.";
+                    throw new MojoFailureException(ex.getMessage() + ": " + errorMsg);
+                }
                 throw new MojoFailureException(ex.getMessage(), ex);
             }
 
