@@ -265,7 +265,7 @@ public class CxScanPlugin extends AbstractMojo {
                     try {
                         shraga.login();
                     } catch (CxClientException e) {
-                        throw new IOException(e);
+                        throw new MojoFailureException(e.getMessage());
                     }
                     String errorMsg = "Connection Failed.\n" +
                             "Validate the provided login credentials and server URL are correct.\n" +
