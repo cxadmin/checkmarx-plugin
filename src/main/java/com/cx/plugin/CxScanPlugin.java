@@ -24,6 +24,7 @@ import org.codehaus.plexus.archiver.zip.ZipArchiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.impl.MavenLoggerAdapter;
+import org.whitesource.fs.FSAConfigProperties;
 
 import java.io.File;
 import java.io.IOException;
@@ -276,6 +277,25 @@ public class CxScanPlugin extends AbstractMojo {
                 throw new MojoFailureException(ex.getMessage(), ex);
             }
 
+            //Create OSA scan
+            if (config.getOsaEnabled()) {
+
+                File dummyFileForOSA = null;
+                try {
+                    dummyFileForOSA = createDummyFileForOSA();
+                    FSAConfigProperties scannerProperties = generateOSAScanConfiguration(project.getBasedir().getAbsolutePath(), osaIgnoreScopes, dummyFileForOSA.getName());
+                    shraga.setOsaFSAProperties(scannerProperties);
+                    shraga.createOSAScan();
+                    osaCreated = true;
+                } catch (com.cx.restclient.exception.CxClientException | IOException e) {
+                    ret.setOsaCreateException(e);
+                    log.warn(e.getMessage());
+                } finally {
+                    FileUtils.deleteQuietly(dummyFileForOSA);
+                }
+            }
+
+            //Create SAST scan
             if (config.getSastEnabled()) {
                 try {
                     //prepare sources to scan (zip them)
@@ -290,24 +310,6 @@ public class CxScanPlugin extends AbstractMojo {
                     log.error(e.getMessage());
                 }
             }
-
-            if (config.getOsaEnabled()) {
-
-                File dummyFileForOSA = null;
-                try {
-                    dummyFileForOSA = createDummyFileForOSA();
-                    Properties scannerProperties = generateOSAScanConfiguration(project.getBasedir().getAbsolutePath(), osaIgnoreScopes, dummyFileForOSA.getName());
-                    shraga.setOsaFSAProperties(scannerProperties);
-                    shraga.createOSAScan();
-                    osaCreated = true;
-                } catch (com.cx.restclient.exception.CxClientException | IOException e) {
-                    ret.setOsaCreateException(e);
-                    log.warn(e.getMessage());
-                } finally {
-                    FileUtils.deleteQuietly(dummyFileForOSA);
-                }
-            }
-
             //Asynchronous MODE
             if (!config.getSynchronous()) {
                 if (ret.getSastCreateException() != null) {
@@ -321,7 +323,7 @@ public class CxScanPlugin extends AbstractMojo {
                 return;
             }
 
-            //wait for sast scan to finish
+            //Get SAST results
             if (sastCreated) {
                 try {
                     SASTResults sastResults = shraga.waitForSASTResults();
@@ -337,6 +339,8 @@ public class CxScanPlugin extends AbstractMojo {
                     log.error(e.getMessage());
                 }
             }
+
+            //Get OSA results
             if (osaCreated) {
                 try {
                     OSAResults osaResults = shraga.waitForOSAResults();
