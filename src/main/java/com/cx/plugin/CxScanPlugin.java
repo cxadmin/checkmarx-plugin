@@ -275,21 +275,7 @@ public class CxScanPlugin extends AbstractMojo {
                 throw new MojoFailureException(ex.getMessage(), ex);
             }
 
-            if (config.getSastEnabled()) {
-                try {
-                    //prepare sources to scan (zip them)
-                    log.info("Zipping sources");
-                    File zipFile = zipSources(reactorProjects, zipArchiver, outputDirectory, log);
-                    config.setZipFile(zipFile);
-
-                    shraga.createSASTScan();
-                    sastCreated = true;
-                } catch (IOException | CxClientException e) {
-                    ret.setSastCreateException(e);
-                    log.error(e.getMessage());
-                }
-            }
-
+            //Create OSA scan
             if (config.getOsaEnabled()) {
 
                 File dummyFileForOSA = null;
@@ -307,6 +293,22 @@ public class CxScanPlugin extends AbstractMojo {
                 }
             }
 
+            //Create SAST scan
+            if (config.getSastEnabled()) {
+                try {
+                    //prepare sources to scan (zip them)
+                    log.info("Zipping sources");
+                    File zipFile = zipSources(reactorProjects, zipArchiver, outputDirectory, log);
+                    config.setZipFile(zipFile);
+
+                    shraga.createSASTScan();
+                    sastCreated = true;
+                } catch (IOException | CxClientException e) {
+                    ret.setSastCreateException(e);
+                    log.error(e.getMessage());
+                }
+            }
+
             //Asynchronous MODE
             if (!config.getSynchronous()) {
                 if (ret.getSastCreateException() != null) {
@@ -320,7 +322,7 @@ public class CxScanPlugin extends AbstractMojo {
                 return;
             }
 
-            //wait for sast scan to finish
+            //Get SAST results
             if (sastCreated) {
                 try {
                     SASTResults sastResults = shraga.waitForSASTResults();
@@ -336,6 +338,8 @@ public class CxScanPlugin extends AbstractMojo {
                     log.error(e.getMessage());
                 }
             }
+
+            //Get OSA results
             if (osaCreated) {
                 try {
                     OSAResults osaResults = shraga.waitForOSAResults();
