@@ -75,10 +75,6 @@ public abstract class CxPluginUtils {
         }
         log.info("CxOSA enabled: " + config.getOsaEnabled());
         if (config.getOsaEnabled()) {
-
-            log.warn("osaExclusions parameter is not supported in this version");
-            log.warn("osaGenerateHTMLReport parameter is not supported in this version");
-            log.warn("osaGeneratePDFReport parameter is not supported in this version");
             log.info("osaIgnoreScopes: " + Arrays.toString(osaIgnoreScopes));
             log.info("CxOSA thresholds enabled: " + config.getOsaThresholdsEnabled());
             if (config.getOsaThresholdsEnabled()) {
