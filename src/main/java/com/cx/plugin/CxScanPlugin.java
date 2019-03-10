@@ -357,10 +357,7 @@ public class CxScanPlugin extends AbstractMojo {
                 assertBuildFailure(thresholdResult.getFailDescription(), ret);
             }
 
-        } catch (
-                InterruptedException e)
-
-        {
+        } catch (InterruptedException e) {
             log.error("Interrupted exception: " + e.getMessage(), e);
 
             if (shraga != null && sastCreated) {
@@ -368,7 +365,8 @@ public class CxScanPlugin extends AbstractMojo {
                 cancelScan(shraga);
             }
             throw new MojoExecutionException(e.getMessage());
-
+        } catch (MojoFailureException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Unexpected exception: " + e.getMessage(), e);
             throw new MojoExecutionException(e.getMessage());
@@ -417,7 +415,7 @@ public class CxScanPlugin extends AbstractMojo {
         scanConfig.setSastLowThreshold(lowSeveritiesThreshold);
         scanConfig.setGeneratePDFReport(generatePDFReport);
         scanConfig.setOsaEnabled(osaEnabled);
-        boolean osaThresholdEnabled = (highSeveritiesThreshold > 0 || mediumSeveritiesThreshold > 0 || lowSeveritiesThreshold > 0);//todo checkk null
+        boolean osaThresholdEnabled = (osaHighSeveritiesThreshold > 0 || osaMediumSeveritiesThreshold > 0 || osaLowSeveritiesThreshold > 0);//todo checkk null
         scanConfig.setOsaGenerateJsonReport(osaGenerateJsonReport);
         scanConfig.setOsaThresholdsEnabled(osaThresholdEnabled);
         scanConfig.setOsaHighThreshold(osaHighSeveritiesThreshold);
