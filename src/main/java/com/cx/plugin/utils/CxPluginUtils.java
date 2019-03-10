@@ -93,24 +93,24 @@ public abstract class CxPluginUtils {
 
     public static void assertBuildFailure(String thDescription, ScanResults ret) throws MojoFailureException {
         StringBuilder builder = new StringBuilder();
-        builder.append("*****The Build Failed for the Following Reasons: *****");
+        builder.append("\n*****The Build Failed for the Following Reasons: *****").append("\n");
 
         if (ret.getSastCreateException() != null) {
-            builder.append(ret.getSastCreateException().getMessage());
+            builder.append(ret.getSastCreateException().getMessage()).append("\n");
         }
         if (ret.getSastWaitException() != null) {
-            builder.append(ret.getSastWaitException().getMessage());
+            builder.append(ret.getSastWaitException().getMessage()).append("\n");
         }
         if (ret.getOsaCreateException() != null) {
-            builder.append(ret.getOsaCreateException().getMessage());
+            builder.append(ret.getOsaCreateException().getMessage()).append("\n");
         }
         if (ret.getOsaWaitException() != null) {
-            builder.append(ret.getOsaWaitException().getMessage());
+            builder.append(ret.getOsaWaitException().getMessage()).append("\n");
         }
 
         String[] lines = thDescription.split("\\n");
         for (String s : lines) {
-            builder.append(s);
+            builder.append(s).append("\n");
         }
         builder.append("-----------------------------------------------------------------------------------------\n");
 
