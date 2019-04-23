@@ -1,9 +1,9 @@
 package com.cx.plugin;
 
-import com.cx.plugin.dto.ScanResults;
 import com.cx.restclient.CxShragaClient;
 import com.cx.restclient.common.ShragaUtils;
 import com.cx.restclient.configuration.CxScanConfig;
+import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
@@ -211,6 +211,10 @@ public class CxScanPlugin extends AbstractMojo {
     @Parameter(defaultValue = "true", property = "cx.osaGenerateJsonReport")
     private boolean osaGenerateJsonReport;
 
+    @Parameter(defaultValue = "false", property = "cx.enablePolicyViolations")
+    private boolean enablePolicyViolations;
+
+
     /**
      * Define an output directory for the scan reports.
      */
@@ -255,7 +259,7 @@ public class CxScanPlugin extends AbstractMojo {
                 throw new MojoFailureException("Both SAST and OSA are disabled. exiting");
             }
             //create scans and retrieve results (in jenkins agent)
-            ScanResults ret = new ScanResults(new SASTResults(), new OSAResults());
+            ScanResults ret = new ScanResults();
 
 
             //initialize cx client
@@ -350,19 +354,20 @@ public class CxScanPlugin extends AbstractMojo {
                     log.error(e.getMessage());
                 }
             }
-
-            String buildFailureResult = ShragaUtils.getBuildFailureResult(config,ret.getSastResults(), ret.getOsaResults());
-            if (!StringUtils.isEmpty(buildFailureResult) || ret.getSastWaitException() != null || ret.getSastCreateException() != null ||
-                    ret.getOsaCreateException() != null || ret.getOsaWaitException() != null)
-            {
-                assertBuildFailure(buildFailureResult, ret);
-
+            if (config.getEnablePolicyViolations()) {
+                shraga.printIsProjectViolated();
             }
 
-        } catch (
-                InterruptedException e)
 
-        {
+            String buildFailureResult = ShragaUtils.getBuildFailureResult(config, ret.getSastResults(), ret.getOsaResults());
+
+            //assert if expected exception is thrown  OR when vulnerabilities under threshold OR when policy violated
+            if (!StringUtils.isEmpty(buildFailureResult) || ret.getSastWaitException() != null || ret.getSastCreateException() != null ||
+                    ret.getOsaCreateException() != null || ret.getOsaWaitException() != null || ret.getGeneralException() != null) {
+                assertBuildFailure(buildFailureResult, ret);
+            }
+
+        } catch (InterruptedException e) {
             log.error("Interrupted exception: " + e.getMessage(), e);
 
             if (shraga != null && sastCreated) {
@@ -371,6 +376,8 @@ public class CxScanPlugin extends AbstractMojo {
             }
             throw new MojoExecutionException(e.getMessage());
 
+        } catch (MojoExecutionException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Unexpected exception: " + e.getMessage(), e);
             throw new MojoExecutionException(e.getMessage());
@@ -425,6 +432,7 @@ public class CxScanPlugin extends AbstractMojo {
         scanConfig.setOsaHighThreshold(osaHighSeveritiesThreshold);
         scanConfig.setOsaMediumThreshold(osaMediumSeveritiesThreshold);
         scanConfig.setOsaLowThreshold(osaLowSeveritiesThreshold);
+        scanConfig.setEnablePolicyViolations(enablePolicyViolations);
 
         return scanConfig;
     }

@@ -1,8 +1,8 @@
 package com.cx.plugin.utils;
 
 
-import com.cx.plugin.dto.ScanResults;
 import com.cx.restclient.configuration.CxScanConfig;
+import com.cx.restclient.dto.ScanResults;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -67,6 +67,7 @@ public abstract class CxPluginUtils {
         log.info("Folder exclusions: " + (config.getSastFolderExclusions()));
         log.info("Is synchronous scan: " + config.getSynchronous());
         log.info("Generate PDF report: " + config.getGeneratePDFReport());
+        log.info("Policy violations enabled: " + config.getEnablePolicyViolations());
         log.info("CxSAST thresholds enabled: " + config.getSastThresholdsEnabled());
         if (config.getSastThresholdsEnabled()) {
             log.info("CxSAST high threshold: " + (config.getSastHighThreshold() == null ? "[No Threshold]" : config.getSastHighThreshold()));
@@ -91,18 +92,11 @@ public abstract class CxPluginUtils {
         StringBuilder builder = new StringBuilder();
         builder.append("*****The Build Failed for the Following Reasons: *****");
 
-        if (ret.getSastCreateException() != null) {
-            builder.append(ret.getSastCreateException().getMessage());
-        }
-        if (ret.getSastWaitException() != null) {
-            builder.append(ret.getSastWaitException().getMessage());
-        }
-        if (ret.getOsaCreateException() != null) {
-            builder.append(ret.getOsaCreateException().getMessage());
-        }
-        if (ret.getOsaWaitException() != null) {
-            builder.append(ret.getOsaWaitException().getMessage());
-        }
+        appendError(ret.getGeneralException(), builder);
+        appendError(ret.getSastCreateException(), builder);
+        appendError(ret.getSastWaitException(), builder);
+        appendError(ret.getOsaCreateException(), builder);
+        appendError(ret.getOsaWaitException(), builder);
 
         String[] lines = thDescription.split("\\n");
         for (String s : lines) {
@@ -110,9 +104,14 @@ public abstract class CxPluginUtils {
         }
         builder.append("-----------------------------------------------------------------------------------------\n");
 
-
         throw new MojoFailureException(builder.toString());
+    }
 
+    private static StringBuilder appendError(Exception ex, StringBuilder builder) {
+        if (ex != null) {
+            builder.append(ex.getMessage()).append("\\n");
+        }
+        return builder;
     }
 
     public static Integer resolveInt(String value, Logger log) {
@@ -154,7 +153,7 @@ public abstract class CxPluginUtils {
                     return fileName.endsWith("webapp");
                 }
             });
-            if (webappDir.length > 0 && webappDir[0].exists()){
+            if (webappDir.length > 0 && webappDir[0].exists()) {
                 zipArchiver.addDirectory(webappDir[0], prefix);
             }
 
@@ -172,7 +171,7 @@ public abstract class CxPluginUtils {
             //add scripts
             List scriptSourceRoots = subProject.getScriptSourceRoots();
             for (Object c : scriptSourceRoots) {
-                File scriptDir = new File((String)c);
+                File scriptDir = new File((String) c);
                 if (scriptDir.exists()) {
                     zipArchiver.addDirectory(scriptDir, prefix);
                 }
@@ -204,7 +203,7 @@ public abstract class CxPluginUtils {
 
         ret.put("includes", dummyFilename);
 
-        if(osaIgnoreScopes != null && osaIgnoreScopes.length > 0) {
+        if (osaIgnoreScopes != null && osaIgnoreScopes.length > 0) {
             ret.put("maven.ignoredScopes", StringUtils.join(",", osaIgnoreScopes));
         }
         ret.put("d", scanFolder);
