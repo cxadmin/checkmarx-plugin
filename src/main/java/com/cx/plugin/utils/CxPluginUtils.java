@@ -27,10 +27,9 @@ import static com.cx.plugin.CxScanPlugin.SOURCES_ZIP_NAME;
 public abstract class CxPluginUtils {
 
     public static void printLogo(Logger log) {
-
-        //design by Gal Nussbaum <gal.nussbaum@checkmarx.com>
+        // Designed by Gal Nussbaum <gal.nussbaum@checkmarx.com>
         log.info(
-                "                                            \n" +
+                         "                                            \n" +
                         "         CxCxCxCxCxCxCxCxCxCxCxC            \n" +
                         "        CxCxCxCxCxCxCxCxCxCxCxCxCx          \n" +
                         "       CxCxCxCxCxCxCxCxCxCxCxCxCxCx         \n" +
