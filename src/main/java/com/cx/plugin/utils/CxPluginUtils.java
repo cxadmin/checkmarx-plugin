@@ -30,7 +30,7 @@ public abstract class CxPluginUtils {
 
         //design by Gal Nussbaum <gal.nussbaum@checkmarx.com>
         log.info(
-                "                                            \n" +
+                        "                                            \n" +
                         "         CxCxCxCxCxCxCxCxCxCxCxC            \n" +
                         "        CxCxCxCxCxCxCxCxCxCxCxCxCx          \n" +
                         "       CxCxCxCxCxCxCxCxCxCxCxCxCxCx         \n" +
