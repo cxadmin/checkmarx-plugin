@@ -48,7 +48,6 @@ public abstract class CxPluginUtils {
                         "                                            \n" +
                         "            C H E C K M A R X               \n"
         );
-
     }
 
     public static void printConfiguration(CxScanConfig config, String[] osaIgnoreScopes, String pluginVersion, Logger log) {
