@@ -27,10 +27,9 @@ import static com.cx.plugin.CxScanPlugin.SOURCES_ZIP_NAME;
 public abstract class CxPluginUtils {
 
     public static void printLogo(Logger log) {
-
-        //design by Gal Nussbaum <gal.nussbaum@checkmarx.com>
+        // Design by Gal Nussbaum <gal.nussbaum@checkmarx.com>
         log.info(
-                        "                                            \n" +
+                "                                            \n" +
                         "         CxCxCxCxCxCxCxCxCxCxCxC            \n" +
                         "        CxCxCxCxCxCxCxCxCxCxCxCxCx          \n" +
                         "       CxCxCxCxCxCxCxCxCxCxCxCxCxCx         \n" +
@@ -49,7 +48,6 @@ public abstract class CxPluginUtils {
                         "                                            \n" +
                         "            C H E C K M A R X               \n"
         );
-
     }
 
     public static void printConfiguration(CxScanConfig config, String[] osaIgnoreScopes, String pluginVersion, Logger log) {
@@ -158,7 +156,7 @@ public abstract class CxPluginUtils {
                     return fileName.endsWith("webapp");
                 }
             });
-            if (webappDir.length > 0 && webappDir[0].exists()){
+            if (webappDir.length > 0 && webappDir[0].exists()) {
                 zipArchiver.addDirectory(webappDir[0], prefix);
             }
 
@@ -176,7 +174,7 @@ public abstract class CxPluginUtils {
             //add scripts
             List scriptSourceRoots = subProject.getScriptSourceRoots();
             for (Object c : scriptSourceRoots) {
-                File scriptDir = new File((String)c);
+                File scriptDir = new File((String) c);
                 if (scriptDir.exists()) {
                     zipArchiver.addDirectory(scriptDir, prefix);
                 }
@@ -208,7 +206,7 @@ public abstract class CxPluginUtils {
 
         ret.put("includes", dummyFilename);
 
-        if(osaIgnoreScopes != null && osaIgnoreScopes.length > 0) {
+        if (osaIgnoreScopes != null && osaIgnoreScopes.length > 0) {
             ret.put("maven.ignoredScopes", StringUtils.join(",", osaIgnoreScopes));
         }
         ret.put("d", scanFolder);
