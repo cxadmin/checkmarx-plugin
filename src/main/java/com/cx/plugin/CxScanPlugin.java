@@ -24,7 +24,6 @@ import org.codehaus.plexus.archiver.zip.ZipArchiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.impl.MavenLoggerAdapter;
-import org.whitesource.fs.FSAConfigProperties;
 
 import java.io.File;
 import java.io.IOException;
@@ -287,7 +286,7 @@ public class CxScanPlugin extends AbstractMojo {
                 File dummyFileForOSA = null;
                 try {
                     dummyFileForOSA = createDummyFileForOSA();
-                    FSAConfigProperties scannerProperties = generateOSAScanConfiguration(project.getBasedir().getAbsolutePath(), osaIgnoreScopes, dummyFileForOSA.getName());
+                    Properties scannerProperties = generateOSAScanConfiguration(project.getBasedir().getAbsolutePath(), osaIgnoreScopes, dummyFileForOSA.getName());
                     shraga.setOsaFSAProperties(scannerProperties);
                     shraga.createOSAScan();
                     osaCreated = true;
