@@ -66,36 +66,23 @@
                     <groupId>commons-beanutils</groupId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>commons-beanutils</artifactId>
-                    <groupId>commons-beanutils</groupId>
-                </exclusion>
-                <exclusion>
                     <artifactId>struts-core</artifactId>
                     <groupId>org.apache.struts</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <artifactId>commons-beanutils</artifactId>
-            <groupId>commons-beanutils</groupId>
-            <version>1.9.3</version>
-        </dependency>
-        <dependency>
-            <artifactId>struts-core</artifactId>
-            <groupId>org.apache.struts</groupId>
-            <version>1.3.10</version>
-        </dependency>
+
         <!--for zip achiever -->
         <dependency>
             <groupId>org.codehaus.plexus</groupId>
             <artifactId>plexus-archiver</artifactId>
             <version>3.6.0</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>commons-compress</artifactId>
-                    <groupId>org.apache.commons</groupId>
-                </exclusion>
-            </exclusions>
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <artifactId>commons-compress</artifactId>-->
+<!--                    <groupId>org.apache.commons</groupId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
         </dependency>
         <dependency>
             <groupId>org.codehaus.plexus</groupId>
