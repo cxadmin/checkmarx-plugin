@@ -18,11 +18,15 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.Server;
+import org.apache.maven.settings.Settings;
 import org.codehaus.plexus.archiver.Archiver;
 import org.codehaus.plexus.archiver.zip.ZipArchiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.impl.MavenLoggerAdapter;
+import org.sonatype.plexus.components.sec.dispatcher.DefaultSecDispatcher;
+import org.sonatype.plexus.components.sec.dispatcher.SecDispatcherException;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,18 +43,20 @@ import static com.cx.plugin.utils.CxPluginUtils.*;
 @Mojo(name = "scan", aggregator = true, requiresDependencyResolution = ResolutionScope.TEST, inheritByDefault = false)
 public class CxScanPlugin extends AbstractMojo {
 
-    public static final String SOURCES_ZIP_NAME = "sources";
     private static Logger log = LoggerFactory.getLogger(CxScanPlugin.class);
+    public static final String PLUGIN_ORIGIN = "Maven";
+    public static final String SOURCES_ZIP_NAME = "sources";
+
     /**
      * The username of the user running the scan.
      */
-    @Parameter(required = true, property = "cx.username")
+    @Parameter(required = false, property = "cx.username")
     private String username;
 
     /**
      * The password of the user running the scan.
      */
-    @Parameter(required = true, property = "cx.password")
+    @Parameter(required = false, property = "cx.password", readonly = true)
     private String password;
 
     /**
@@ -223,10 +229,22 @@ public class CxScanPlugin extends AbstractMojo {
 
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private MavenProject project;
+
     @Parameter(defaultValue = "${reactorProjects}", readonly = true)
     private List<MavenProject> reactorProjects;
+
+    @Parameter(defaultValue = "${settings}", readonly = true, required = true)
+    private Settings settings;
+
+    @Parameter(property = "serverId")
+    private String serverId;
+
+    @Component(role = org.sonatype.plexus.components.sec.dispatcher.SecDispatcher.class, hint = "default")
+    private DefaultSecDispatcher securityDispatcher;
+
     @Component(role = Archiver.class, hint = "zip")
     private ZipArchiver zipArchiver;
+
     private String pluginVersion;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -377,7 +395,6 @@ public class CxScanPlugin extends AbstractMojo {
         }
     }
 
-
     private File createDummyFileForOSA() throws IOException {
         String dummyFilename = "dummy" + RandomStringUtils.randomNumeric(4) + ".java";
         File file = new File(project.getBasedir().getAbsolutePath(), dummyFilename);
@@ -392,11 +409,24 @@ public class CxScanPlugin extends AbstractMojo {
         }
     }
 
-    private CxScanConfig resolveConfigurationMap() {
+/*    public void setSettings(Settings settings) {
+        this.settings = settings;
+    }
+
+    public void setServerId(String key) {
+        this.serverId = key;
+    }
+
+    public void setSecurityDispatcher(DefaultSecDispatcher securityDispatcher) {
+        this.securityDispatcher = securityDispatcher;
+    }*/
+
+    private CxScanConfig resolveConfigurationMap() throws MojoExecutionException {
         CxScanConfig scanConfig = new CxScanConfig();
-        scanConfig.setCxOrigin("Maven");//TODO hardcodded
+        scanConfig.setCxOrigin(PLUGIN_ORIGIN);
         scanConfig.setSastEnabled(true);
         scanConfig.setDisableCertificateValidation(disableCertificateVerification);
+        loadUserInfoFromSettings();
         scanConfig.setUsername(username);
         scanConfig.setPassword(password);
         scanConfig.setUrl(url.toString());// todo check
@@ -408,7 +438,7 @@ public class CxScanPlugin extends AbstractMojo {
         scanConfig.setScanComment(comment);
         scanConfig.setIncremental(isIncrementalScan);
         scanConfig.setSynchronous(isSynchronous);
-        boolean thresholdEnabled = (highSeveritiesThreshold > 0 || mediumSeveritiesThreshold > 0 || lowSeveritiesThreshold > 0);//todo checkk null
+        boolean thresholdEnabled = (highSeveritiesThreshold > 0 || mediumSeveritiesThreshold > 0 || lowSeveritiesThreshold > 0);//todo check null
         scanConfig.setSastThresholdsEnabled(thresholdEnabled);
         scanConfig.setSastHighThreshold(highSeveritiesThreshold);
         scanConfig.setSastMediumThreshold(mediumSeveritiesThreshold);
@@ -425,5 +455,38 @@ public class CxScanPlugin extends AbstractMojo {
         return scanConfig;
     }
 
+    private void loadUserInfoFromSettings() throws MojoExecutionException {
+        if (this.serverId == null) {
+            return;
+        }
+
+        if ((username == null || password == null) && (settings != null)) {
+            Server server = this.settings.getServer(this.serverId);
+            if (server != null) {
+                if (username == null) {
+                    username = server.getUsername();
+                }
+                if (password == null && server.getPassword() != null) {
+                    try {
+                        password = securityDispatcher.decrypt(server.getPassword());
+                    } catch (SecDispatcherException ex) {
+                        try {
+                            securityDispatcher.setConfigurationFile(System.getProperty("user.home") + "\\.m2\\settings-security.xml");
+                            password = securityDispatcher.decrypt(server.getPassword());
+                        } catch (Exception e) {
+                            throw new MojoExecutionException(e.getMessage());
+                        }
+                    }
+                }
+            }
+        }
+
+        if (username == null) {
+            username = "";
+        }
+        if (password == null) {
+            password = "";
+        }
+    }
 
 }
