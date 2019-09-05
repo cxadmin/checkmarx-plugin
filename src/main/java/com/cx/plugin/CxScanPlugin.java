@@ -56,7 +56,7 @@ public class CxScanPlugin extends AbstractMojo {
     /**
      * The password of the user running the scan.
      */
-    @Parameter(required = false, property = "cx.password", readonly = true)
+    @Parameter(required = false, property = "cx.password")
     private String password;
 
     /**
