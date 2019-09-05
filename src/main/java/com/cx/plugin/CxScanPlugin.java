@@ -409,18 +409,6 @@ public class CxScanPlugin extends AbstractMojo {
         }
     }
 
-/*    public void setSettings(Settings settings) {
-        this.settings = settings;
-    }
-
-    public void setServerId(String key) {
-        this.serverId = key;
-    }
-
-    public void setSecurityDispatcher(DefaultSecDispatcher securityDispatcher) {
-        this.securityDispatcher = securityDispatcher;
-    }*/
-
     private CxScanConfig resolveConfigurationMap() throws MojoExecutionException {
         CxScanConfig scanConfig = new CxScanConfig();
         scanConfig.setCxOrigin(PLUGIN_ORIGIN);
@@ -445,7 +433,7 @@ public class CxScanPlugin extends AbstractMojo {
         scanConfig.setSastLowThreshold(lowSeveritiesThreshold);
         scanConfig.setGeneratePDFReport(generatePDFReport);
         scanConfig.setOsaEnabled(osaEnabled);
-        boolean osaThresholdEnabled = (osaHighSeveritiesThreshold > 0 || osaMediumSeveritiesThreshold > 0 || osaLowSeveritiesThreshold > 0);//todo checkk null
+        boolean osaThresholdEnabled = (osaHighSeveritiesThreshold > 0 || osaMediumSeveritiesThreshold > 0 || osaLowSeveritiesThreshold > 0);//todo check null
         scanConfig.setOsaGenerateJsonReport(osaGenerateJsonReport);
         scanConfig.setOsaThresholdsEnabled(osaThresholdEnabled);
         scanConfig.setOsaHighThreshold(osaHighSeveritiesThreshold);
