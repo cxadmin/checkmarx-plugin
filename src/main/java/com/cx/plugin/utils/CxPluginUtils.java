@@ -136,11 +136,11 @@ public abstract class CxPluginUtils {
 
             //add sources
             List compileSourceRoots = subProject.getCompileSourceRoots();
-            File sourceDir = subProject.getBasedir();//todo check if java not exist (source not exist)
+            File sourceDir = subProject.getBasedir();
 
             for (Object c : compileSourceRoots) {
                 sourceDir = new File((String) c);
-                if (sourceDir.exists()) {
+                if (sourceDir.exists() && (isContainFileExt(sourceDir, ".java") || isContainFileExt(sourceDir, ".cpp"))) {
                     zipArchiver.addDirectory(sourceDir, prefix);
                 }
             }
@@ -151,7 +151,7 @@ public abstract class CxPluginUtils {
                     return fileName.endsWith("webapp");
                 }
             });
-            if (webappDir.length > 0 && webappDir[0].exists()) {
+            if (webappDir != null && webappDir.length > 0 && webappDir[0].exists()) {
                 zipArchiver.addDirectory(webappDir[0], prefix);
             }
 
@@ -185,6 +185,31 @@ public abstract class CxPluginUtils {
         }
 
         return new File(outputDirectory, SOURCES_ZIP_NAME + ".zip");
+    }
+
+    private static boolean containFileExt = false;
+
+    /**
+     * @param dir     the root dir to search from
+     * @param fileExt the file extension to look for
+     * @return true if file of this @fileExt exist or false otherwise.
+     */
+    private static boolean isContainFileExt(File dir, String fileExt) {
+        if (containFileExt) {
+            return true;
+        }
+        if (dir != null && dir.isDirectory()) {
+            for (File file : dir.listFiles()) {
+                if (file.isDirectory()) {
+                    isContainFileExt(file, fileExt);
+                } else {
+                    if (file.getName().endsWith(fileExt)) {
+                        containFileExt = true;
+                    }
+                }
+            }
+        }
+        return containFileExt;
     }
 
     private static MavenProject getProject(MavenProject p) {
