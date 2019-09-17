@@ -26,10 +26,13 @@ import static com.cx.plugin.CxScanPlugin.SOURCES_ZIP_NAME;
 
 public abstract class CxPluginUtils {
 
+    private static final String[] SUPPORTED_SUFFIX =
+            {".java", ".cpp", ".c++", ".cxx", ".hpp", ".hh", ".h++", ".hxx", ".c", "cc", "h"};
+
     public static void printLogo(Logger log) {
         // Designed by Gal Nussbaum <gal.nussbaum@checkmarx.com>
         log.info(
-                         "                                            \n" +
+                "                                            \n" +
                         "         CxCxCxCxCxCxCxCxCxCxCxC            \n" +
                         "        CxCxCxCxCxCxCxCxCxCxCxCxCx          \n" +
                         "       CxCxCxCxCxCxCxCxCxCxCxCxCxCx         \n" +
@@ -140,7 +143,7 @@ public abstract class CxPluginUtils {
 
             for (Object c : compileSourceRoots) {
                 sourceDir = new File((String) c);
-                if (sourceDir.exists() && (isContainFileExt(sourceDir, ".java") || isContainFileExt(sourceDir, ".cpp"))) {
+                if (sourceDir.exists() && isContainFileExt(sourceDir)) {
                     zipArchiver.addDirectory(sourceDir, prefix);
                 }
             }
@@ -190,21 +193,22 @@ public abstract class CxPluginUtils {
     private static boolean containFileExt = false;
 
     /**
-     * @param dir     the root dir to search from
-     * @param fileExt the file extension to look for
+     * @param dir the root dir to search from
      * @return true if file of this @fileExt exist or false otherwise.
      */
-    private static boolean isContainFileExt(File dir, String fileExt) {
+    private static boolean isContainFileExt(File dir) {
         if (containFileExt) {
             return true;
         }
         if (dir != null && dir.isDirectory()) {
             for (File file : dir.listFiles()) {
                 if (file.isDirectory()) {
-                    isContainFileExt(file, fileExt);
+                    isContainFileExt(file);
                 } else {
-                    if (file.getName().endsWith(fileExt)) {
-                        containFileExt = true;
+                    for (String suffix : SUPPORTED_SUFFIX) {
+                        if (file.getName().endsWith(suffix)) {
+                            containFileExt = true;
+                        }
                     }
                 }
             }
@@ -233,6 +237,7 @@ public abstract class CxPluginUtils {
 
         return ret;
     }
+
 }
 
 
