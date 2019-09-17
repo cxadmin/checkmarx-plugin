@@ -47,6 +47,7 @@ public class CxScanPlugin extends AbstractMojo {
     private static Logger log = LoggerFactory.getLogger(CxScanPlugin.class);
     public static final String PLUGIN_ORIGIN = "Maven";
     public static final String SOURCES_ZIP_NAME = "sources";
+
     /**
      * The username of the user running the scan.
      */
