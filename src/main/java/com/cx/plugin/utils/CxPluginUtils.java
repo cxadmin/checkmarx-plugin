@@ -142,7 +142,7 @@ public abstract class CxPluginUtils {
 
             for (Object c : compileSourceRoots) {
                 sourceDir = new File((String) c);
-                if (sourceDir.exists() && isContainFileExt(sourceDir, ".java")) {
+                if (sourceDir.exists() && (isContainFileExt(sourceDir, ".java") || isContainFileExt(sourceDir, ".cpp"))) {
                     zipArchiver.addDirectory(sourceDir, prefix);
                 }
             }
