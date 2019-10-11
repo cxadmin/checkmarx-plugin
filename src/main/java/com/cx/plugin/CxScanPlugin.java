@@ -1,9 +1,9 @@
 package com.cx.plugin;
 
-import com.cx.plugin.dto.ScanResults;
 import com.cx.restclient.CxShragaClient;
 import com.cx.restclient.common.ShragaUtils;
 import com.cx.restclient.configuration.CxScanConfig;
+import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
@@ -19,17 +19,21 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.Server;
+import org.apache.maven.settings.Settings;
 import org.codehaus.plexus.archiver.Archiver;
 import org.codehaus.plexus.archiver.zip.ZipArchiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.impl.MavenLoggerAdapter;
+import org.sonatype.plexus.components.sec.dispatcher.DefaultSecDispatcher;
+import org.sonatype.plexus.components.sec.dispatcher.SecDispatcherException;
+import org.whitesource.fs.FSAConfigProperties;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
-import java.util.Properties;
 
 import static com.cx.plugin.utils.CxPluginUtils.*;
 
@@ -40,18 +44,20 @@ import static com.cx.plugin.utils.CxPluginUtils.*;
 @Mojo(name = "scan", aggregator = true, requiresDependencyResolution = ResolutionScope.TEST, inheritByDefault = false)
 public class CxScanPlugin extends AbstractMojo {
 
-    public static final String SOURCES_ZIP_NAME = "sources";
     private static Logger log = LoggerFactory.getLogger(CxScanPlugin.class);
+    public static final String PLUGIN_ORIGIN = "Maven";
+    public static final String SOURCES_ZIP_NAME = "sources";
+
     /**
      * The username of the user running the scan.
      */
-    @Parameter(required = true, property = "cx.username")
+    @Parameter(required = false, property = "cx.username")
     private String username;
 
     /**
      * The password of the user running the scan.
      */
-    @Parameter(required = true, property = "cx.password")
+    @Parameter(required = false, property = "cx.password")
     private String password;
 
     /**
@@ -210,6 +216,9 @@ public class CxScanPlugin extends AbstractMojo {
     @Parameter(defaultValue = "true", property = "cx.osaGenerateJsonReport")
     private boolean osaGenerateJsonReport;
 
+    @Parameter(defaultValue = "false", property = "cx.enablePolicyViolations")
+    private boolean enablePolicyViolations;
+
     /**
      * Define an output directory for the scan reports.
      */
@@ -224,10 +233,22 @@ public class CxScanPlugin extends AbstractMojo {
 
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private MavenProject project;
+
     @Parameter(defaultValue = "${reactorProjects}", readonly = true)
     private List<MavenProject> reactorProjects;
+
+    @Parameter(defaultValue = "${settings}", readonly = true, required = true)
+    private Settings settings;
+
+    @Parameter(property = "serverId")
+    private String serverId;
+
+    @Component(role = org.sonatype.plexus.components.sec.dispatcher.SecDispatcher.class, hint = "default")
+    private DefaultSecDispatcher securityDispatcher;
+
     @Component(role = Archiver.class, hint = "zip")
     private ZipArchiver zipArchiver;
+
     private String pluginVersion;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -254,7 +275,7 @@ public class CxScanPlugin extends AbstractMojo {
                 throw new MojoFailureException("Both SAST and OSA are disabled. exiting");
             }
             //create scans and retrieve results (in jenkins agent)
-            ScanResults ret = new ScanResults(new SASTResults(), new OSAResults());
+            ScanResults ret = new ScanResults();
 
 
             //initialize cx client
@@ -262,9 +283,39 @@ public class CxScanPlugin extends AbstractMojo {
                 shraga = new CxShragaClient(config, log);
                 shraga.init();
             } catch (Exception ex) {
+                if (ex.getMessage().contains("Server is unavailable")) {
+                    try {
+                        shraga.login();
+                    } catch (CxClientException e) {
+                        throw new MojoFailureException(e.getMessage());
+                    }
+                    String errorMsg = "Connection Failed.\n" +
+                            "Validate the provided login credentials and server URL are correct.\n" +
+                            "In addition, make sure the installed plugin version is compatible with the CxSAST version according to CxSAST release notes.";
+                    throw new MojoFailureException(ex.getMessage() + ": " + errorMsg);
+                }
                 throw new MojoFailureException(ex.getMessage(), ex);
             }
 
+            //Create OSA scan
+            if (config.getOsaEnabled()) {
+
+                File dummyFileForOSA = null;
+                try {
+                    dummyFileForOSA = createDummyFileForOSA();
+                    FSAConfigProperties scannerProperties = generateOSAScanConfiguration(project.getBasedir().getAbsolutePath(), osaIgnoreScopes, dummyFileForOSA.getName());
+                    shraga.setOsaFSAProperties(scannerProperties);
+                    shraga.createOSAScan();
+                    osaCreated = true;
+                } catch (com.cx.restclient.exception.CxClientException | IOException e) {
+                    ret.setOsaCreateException(e);
+                    log.warn(e.getMessage());
+                } finally {
+                    FileUtils.deleteQuietly(dummyFileForOSA);
+                }
+            }
+
+            //Create SAST scan
             if (config.getSastEnabled()) {
                 try {
                     //prepare sources to scan (zip them)
@@ -277,23 +328,6 @@ public class CxScanPlugin extends AbstractMojo {
                 } catch (IOException | CxClientException e) {
                     ret.setSastCreateException(e);
                     log.error(e.getMessage());
-                }
-            }
-
-            if (config.getOsaEnabled()) {
-
-                File dummyFileForOSA = null;
-                try {
-                    dummyFileForOSA = createDummyFileForOSA();
-                    Properties scannerProperties = generateOSAScanConfiguration(project.getBasedir().getAbsolutePath(), osaIgnoreScopes, dummyFileForOSA.getName());
-                    shraga.setOsaFSAProperties(scannerProperties);
-                    shraga.createOSAScan();
-                    osaCreated = true;
-                } catch (com.cx.restclient.exception.CxClientException | IOException e) {
-                    ret.setOsaCreateException(e);
-                    log.warn(e.getMessage());
-                } finally {
-                    FileUtils.deleteQuietly(dummyFileForOSA);
                 }
             }
 
@@ -310,7 +344,7 @@ public class CxScanPlugin extends AbstractMojo {
                 return;
             }
 
-            //wait for sast scan to finish
+            //Get SAST results
             if (sastCreated) {
                 try {
                     SASTResults sastResults = shraga.waitForSASTResults();
@@ -326,6 +360,8 @@ public class CxScanPlugin extends AbstractMojo {
                     log.error(e.getMessage());
                 }
             }
+
+            //Get OSA results
             if (osaCreated) {
                 try {
                     OSAResults osaResults = shraga.waitForOSAResults();
@@ -335,19 +371,20 @@ public class CxScanPlugin extends AbstractMojo {
                     log.error(e.getMessage());
                 }
             }
-
-            String buildFailureResult = ShragaUtils.getBuildFailureResult(config,ret.getSastResults(), ret.getOsaResults());
-            if (!StringUtils.isEmpty(buildFailureResult) || ret.getSastWaitException() != null || ret.getSastCreateException() != null ||
-                    ret.getOsaCreateException() != null || ret.getOsaWaitException() != null)
-            {
-                assertBuildFailure(buildFailureResult, ret);
-
+            if (config.getEnablePolicyViolations()) {
+                shraga.printIsProjectViolated();
             }
 
-        } catch (
-                InterruptedException e)
 
-        {
+            String buildFailureResult = ShragaUtils.getBuildFailureResult(config, ret.getSastResults(), ret.getOsaResults());
+
+            //assert if expected exception is thrown  OR when vulnerabilities under threshold OR when policy violated
+            if (!StringUtils.isEmpty(buildFailureResult) || ret.getSastWaitException() != null || ret.getSastCreateException() != null ||
+                    ret.getOsaCreateException() != null || ret.getOsaWaitException() != null || ret.getGeneralException() != null) {
+                assertBuildFailure(buildFailureResult, ret);
+            }
+
+        } catch (InterruptedException e) {
             log.error("Interrupted exception: " + e.getMessage(), e);
 
             if (shraga != null && sastCreated) {
@@ -355,7 +392,8 @@ public class CxScanPlugin extends AbstractMojo {
                 cancelScan(shraga);
             }
             throw new MojoExecutionException(e.getMessage());
-
+        } catch (MojoExecutionException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Unexpected exception: " + e.getMessage(), e);
             throw new MojoExecutionException(e.getMessage());
@@ -365,7 +403,6 @@ public class CxScanPlugin extends AbstractMojo {
             }
         }
     }
-
 
     private File createDummyFileForOSA() throws IOException {
         String dummyFilename = "dummy" + RandomStringUtils.randomNumeric(4) + ".java";
@@ -381,11 +418,12 @@ public class CxScanPlugin extends AbstractMojo {
         }
     }
 
-    private CxScanConfig resolveConfigurationMap() {
+    private CxScanConfig resolveConfigurationMap() throws MojoExecutionException {
         CxScanConfig scanConfig = new CxScanConfig();
-        scanConfig.setCxOrigin("Maven");//TODO hardcodded
+        scanConfig.setCxOrigin(PLUGIN_ORIGIN);
         scanConfig.setSastEnabled(true);
         scanConfig.setDisableCertificateValidation(disableCertificateVerification);
+        loadUserInfoFromSettings();
         scanConfig.setUsername(username);
         scanConfig.setPassword(password);
         scanConfig.setUrl(url.toString());// todo check
@@ -397,22 +435,56 @@ public class CxScanPlugin extends AbstractMojo {
         scanConfig.setScanComment(comment);
         scanConfig.setIncremental(isIncrementalScan);
         scanConfig.setSynchronous(isSynchronous);
-        boolean thresholdEnabled = (highSeveritiesThreshold > 0 || mediumSeveritiesThreshold > 0 || lowSeveritiesThreshold > 0);//todo checkk null
+        boolean thresholdEnabled = (highSeveritiesThreshold > 0 || mediumSeveritiesThreshold > 0 || lowSeveritiesThreshold > 0);//todo check null
         scanConfig.setSastThresholdsEnabled(thresholdEnabled);
         scanConfig.setSastHighThreshold(highSeveritiesThreshold);
         scanConfig.setSastMediumThreshold(mediumSeveritiesThreshold);
         scanConfig.setSastLowThreshold(lowSeveritiesThreshold);
         scanConfig.setGeneratePDFReport(generatePDFReport);
         scanConfig.setOsaEnabled(osaEnabled);
-        boolean osaThresholdEnabled = (highSeveritiesThreshold > 0 || mediumSeveritiesThreshold > 0 || lowSeveritiesThreshold > 0);//todo checkk null
+        boolean osaThresholdEnabled = (highSeveritiesThreshold > 0 || mediumSeveritiesThreshold > 0 || lowSeveritiesThreshold > 0);//todo check null
         scanConfig.setOsaGenerateJsonReport(osaGenerateJsonReport);
         scanConfig.setOsaThresholdsEnabled(osaThresholdEnabled);
         scanConfig.setOsaHighThreshold(osaHighSeveritiesThreshold);
         scanConfig.setOsaMediumThreshold(osaMediumSeveritiesThreshold);
         scanConfig.setOsaLowThreshold(osaLowSeveritiesThreshold);
+        scanConfig.setEnablePolicyViolations(enablePolicyViolations);
 
         return scanConfig;
     }
 
+    private void loadUserInfoFromSettings() throws MojoExecutionException {
+        if (this.serverId == null) {
+            return;
+        }
+
+        if ((username == null || password == null) && (settings != null)) {
+            Server server = this.settings.getServer(this.serverId);
+            if (server != null) {
+                if (username == null) {
+                    username = server.getUsername();
+                }
+                if (password == null && server.getPassword() != null) {
+                    try {
+                        password = securityDispatcher.decrypt(server.getPassword());
+                    } catch (SecDispatcherException ex) {
+                        try {
+                            securityDispatcher.setConfigurationFile(System.getProperty("user.home") + "\\.m2\\settings-security.xml");
+                            password = securityDispatcher.decrypt(server.getPassword());
+                        } catch (Exception e) {
+                            throw new MojoExecutionException(e.getMessage());
+                        }
+                    }
+                }
+            }
+        }
+
+        if (username == null) {
+            username = "";
+        }
+        if (password == null) {
+            password = "";
+        }
+    }
 
 }

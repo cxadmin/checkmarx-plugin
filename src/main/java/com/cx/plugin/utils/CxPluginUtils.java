@@ -1,8 +1,8 @@
 package com.cx.plugin.utils;
 
 
-import com.cx.plugin.dto.ScanResults;
 import com.cx.restclient.configuration.CxScanConfig;
+import com.cx.restclient.dto.ScanResults;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -10,13 +10,13 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.archiver.zip.ZipArchiver;
 import org.slf4j.Logger;
+import org.whitesource.fs.FSAConfigProperties;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
 import static com.cx.plugin.CxScanPlugin.SOURCES_ZIP_NAME;
 
@@ -26,9 +26,11 @@ import static com.cx.plugin.CxScanPlugin.SOURCES_ZIP_NAME;
 
 public abstract class CxPluginUtils {
 
-    public static void printLogo(Logger log) {
+    private static final String[] SUPPORTED_SUFFIX =
+            {".java", ".cpp", ".c++", ".cxx", ".hpp", ".hh", ".h++", ".hxx", ".c", "cc", "h"};
 
-        //design by Gal Nussbaum <gal.nussbaum@checkmarx.com>
+    public static void printLogo(Logger log) {
+        // Designed by Gal Nussbaum <gal.nussbaum@checkmarx.com>
         log.info(
                 "                                            \n" +
                         "         CxCxCxCxCxCxCxCxCxCxCxC            \n" +
@@ -49,7 +51,6 @@ public abstract class CxPluginUtils {
                         "                                            \n" +
                         "            C H E C K M A R X               \n"
         );
-
     }
 
     public static void printConfiguration(CxScanConfig config, String[] osaIgnoreScopes, String pluginVersion, Logger log) {
@@ -67,6 +68,7 @@ public abstract class CxPluginUtils {
         log.info("Folder exclusions: " + (config.getSastFolderExclusions()));
         log.info("Is synchronous scan: " + config.getSynchronous());
         log.info("Generate PDF report: " + config.getGeneratePDFReport());
+        log.info("Policy violations enabled: " + config.getEnablePolicyViolations());
         log.info("CxSAST thresholds enabled: " + config.getSastThresholdsEnabled());
         if (config.getSastThresholdsEnabled()) {
             log.info("CxSAST high threshold: " + (config.getSastHighThreshold() == null ? "[No Threshold]" : config.getSastHighThreshold()));
@@ -75,10 +77,6 @@ public abstract class CxPluginUtils {
         }
         log.info("CxOSA enabled: " + config.getOsaEnabled());
         if (config.getOsaEnabled()) {
-
-            log.warn("osaExclusions parameter is not supported in this version");
-            log.warn("osaGenerateHTMLReport parameter is not supported in this version");
-            log.warn("osaGeneratePDFReport parameter is not supported in this version");
             log.info("osaIgnoreScopes: " + Arrays.toString(osaIgnoreScopes));
             log.info("CxOSA thresholds enabled: " + config.getOsaThresholdsEnabled());
             if (config.getOsaThresholdsEnabled()) {
@@ -95,18 +93,11 @@ public abstract class CxPluginUtils {
         StringBuilder builder = new StringBuilder();
         builder.append("*****The Build Failed for the Following Reasons: *****");
 
-        if (ret.getSastCreateException() != null) {
-            builder.append(ret.getSastCreateException().getMessage());
-        }
-        if (ret.getSastWaitException() != null) {
-            builder.append(ret.getSastWaitException().getMessage());
-        }
-        if (ret.getOsaCreateException() != null) {
-            builder.append(ret.getOsaCreateException().getMessage());
-        }
-        if (ret.getOsaWaitException() != null) {
-            builder.append(ret.getOsaWaitException().getMessage());
-        }
+        appendError(ret.getGeneralException(), builder);
+        appendError(ret.getSastCreateException(), builder);
+        appendError(ret.getSastWaitException(), builder);
+        appendError(ret.getOsaCreateException(), builder);
+        appendError(ret.getOsaWaitException(), builder);
 
         String[] lines = thDescription.split("\\n");
         for (String s : lines) {
@@ -114,9 +105,14 @@ public abstract class CxPluginUtils {
         }
         builder.append("-----------------------------------------------------------------------------------------\n");
 
-
         throw new MojoFailureException(builder.toString());
+    }
 
+    private static StringBuilder appendError(Exception ex, StringBuilder builder) {
+        if (ex != null) {
+            builder.append(ex.getMessage()).append("\\n");
+        }
+        return builder;
     }
 
     public static Integer resolveInt(String value, Logger log) {
@@ -143,11 +139,11 @@ public abstract class CxPluginUtils {
 
             //add sources
             List compileSourceRoots = subProject.getCompileSourceRoots();
-            File sourceDir = subProject.getBasedir();//todo check if java not exist (source not exist)
+            File sourceDir = subProject.getBasedir();
 
             for (Object c : compileSourceRoots) {
                 sourceDir = new File((String) c);
-                if (sourceDir.exists()) {
+                if (sourceDir.exists() && isContainFileExt(sourceDir)) {
                     zipArchiver.addDirectory(sourceDir, prefix);
                 }
             }
@@ -158,7 +154,7 @@ public abstract class CxPluginUtils {
                     return fileName.endsWith("webapp");
                 }
             });
-            if (webappDir != null && webappDir.length > 0 && webappDir[0].exists()){
+            if (webappDir != null && webappDir.length > 0 && webappDir[0].exists()) {
                 zipArchiver.addDirectory(webappDir[0], prefix);
             }
 
@@ -176,7 +172,7 @@ public abstract class CxPluginUtils {
             //add scripts
             List scriptSourceRoots = subProject.getScriptSourceRoots();
             for (Object c : scriptSourceRoots) {
-                File scriptDir = new File((String)c);
+                File scriptDir = new File((String) c);
                 if (scriptDir.exists()) {
                     zipArchiver.addDirectory(scriptDir, prefix);
                 }
@@ -194,6 +190,32 @@ public abstract class CxPluginUtils {
         return new File(outputDirectory, SOURCES_ZIP_NAME + ".zip");
     }
 
+    private static boolean containFileExt = false;
+
+    /**
+     * @param dir the root dir to search from
+     * @return true if file of this @fileExt exist or false otherwise.
+     */
+    private static boolean isContainFileExt(File dir) {
+        if (containFileExt) {
+            return true;
+        }
+        if (dir != null && dir.isDirectory()) {
+            for (File file : dir.listFiles()) {
+                if (file.isDirectory()) {
+                    isContainFileExt(file);
+                } else {
+                    for (String suffix : SUPPORTED_SUFFIX) {
+                        if (file.getName().endsWith(suffix)) {
+                            containFileExt = true;
+                        }
+                    }
+                }
+            }
+        }
+        return containFileExt;
+    }
+
     private static MavenProject getProject(MavenProject p) {
         if (p.getExecutionProject() != null) {
             return p.getExecutionProject();
@@ -202,19 +224,20 @@ public abstract class CxPluginUtils {
         return p;
     }
 
-    public static Properties generateOSAScanConfiguration(String scanFolder, String[] osaIgnoreScopes, String dummyFilename) {
+    public static FSAConfigProperties generateOSAScanConfiguration(String scanFolder, String[] osaIgnoreScopes, String dummyFilename) {
 
-        Properties ret = new Properties();
+        FSAConfigProperties ret = new FSAConfigProperties();
 
         ret.put("includes", dummyFilename);
 
-        if(osaIgnoreScopes != null && osaIgnoreScopes.length > 0) {
+        if (osaIgnoreScopes != null && osaIgnoreScopes.length > 0) {
             ret.put("maven.ignoredScopes", StringUtils.join(",", osaIgnoreScopes));
         }
         ret.put("d", scanFolder);
 
         return ret;
     }
+
 }
 
 
