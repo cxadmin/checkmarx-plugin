@@ -442,7 +442,7 @@ public class CxScanPlugin extends AbstractMojo {
         scanConfig.setSastLowThreshold(lowSeveritiesThreshold);
         scanConfig.setGeneratePDFReport(generatePDFReport);
         scanConfig.setOsaEnabled(osaEnabled);
-        boolean osaThresholdEnabled = (highSeveritiesThreshold > 0 || mediumSeveritiesThreshold > 0 || lowSeveritiesThreshold > 0);//todo check null
+        boolean osaThresholdEnabled = (osaHighSeveritiesThreshold > 0 || osaMediumSeveritiesThreshold > 0 || osaLowSeveritiesThreshold > 0);//todo check null
         scanConfig.setOsaGenerateJsonReport(osaGenerateJsonReport);
         scanConfig.setOsaThresholdsEnabled(osaThresholdEnabled);
         scanConfig.setOsaHighThreshold(osaHighSeveritiesThreshold);
