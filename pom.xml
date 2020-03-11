@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.checkmarx.maven</groupId>
     <artifactId>checkmarx-maven-plugin</artifactId>
-    <version>9.00.2</version>
+    <version>2020.1.1</version>
     <packaging>maven-plugin</packaging>
     <name>Checkmarx Maven Plugin</name>
     <description>Enables a maven project to integrate with Checkmarx SAST scan.</description>
@@ -26,7 +26,7 @@
         <log4j.version>1.2.17</log4j.version>
         <slf4j.version>1.7.5</slf4j.version>
         <cxf.version>2.2.3</cxf.version>
-        <common.client.version>9.00.9</common.client.version>
+        <common.client.version>2020.1.6.NO.SCA</common.client.version>
     </properties>
 
     <dependencies>
