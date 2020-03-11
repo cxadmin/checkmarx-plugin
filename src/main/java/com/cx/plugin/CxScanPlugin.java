@@ -28,12 +28,12 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.impl.MavenLoggerAdapter;
 import org.sonatype.plexus.components.sec.dispatcher.DefaultSecDispatcher;
 import org.sonatype.plexus.components.sec.dispatcher.SecDispatcherException;
-import org.whitesource.fs.FSAConfigProperties;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
+import java.util.Properties;
 
 import static com.cx.plugin.utils.CxPluginUtils.*;
 
@@ -303,7 +303,7 @@ public class CxScanPlugin extends AbstractMojo {
                 File dummyFileForOSA = null;
                 try {
                     dummyFileForOSA = createDummyFileForOSA();
-                    FSAConfigProperties scannerProperties = generateOSAScanConfiguration(project.getBasedir().getAbsolutePath(), osaIgnoreScopes, dummyFileForOSA.getName());
+                    Properties scannerProperties = generateOSAScanConfiguration(project.getBasedir().getAbsolutePath(), osaIgnoreScopes, dummyFileForOSA.getName());
                     shraga.setOsaFSAProperties(scannerProperties);
                     shraga.createOSAScan();
                     osaCreated = true;
@@ -442,7 +442,7 @@ public class CxScanPlugin extends AbstractMojo {
         scanConfig.setSastLowThreshold(lowSeveritiesThreshold);
         scanConfig.setGeneratePDFReport(generatePDFReport);
         scanConfig.setOsaEnabled(osaEnabled);
-        boolean osaThresholdEnabled = (highSeveritiesThreshold > 0 || mediumSeveritiesThreshold > 0 || lowSeveritiesThreshold > 0);//todo check null
+        boolean osaThresholdEnabled = (osaHighSeveritiesThreshold > 0 || osaMediumSeveritiesThreshold > 0 || osaLowSeveritiesThreshold > 0);//todo check null
         scanConfig.setOsaGenerateJsonReport(osaGenerateJsonReport);
         scanConfig.setOsaThresholdsEnabled(osaThresholdEnabled);
         scanConfig.setOsaHighThreshold(osaHighSeveritiesThreshold);

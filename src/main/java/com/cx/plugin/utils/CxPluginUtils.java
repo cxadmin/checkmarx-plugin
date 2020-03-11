@@ -10,13 +10,13 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.archiver.zip.ZipArchiver;
 import org.slf4j.Logger;
-import org.whitesource.fs.FSAConfigProperties;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 import static com.cx.plugin.CxScanPlugin.SOURCES_ZIP_NAME;
 
@@ -224,9 +224,9 @@ public abstract class CxPluginUtils {
         return p;
     }
 
-    public static FSAConfigProperties generateOSAScanConfiguration(String scanFolder, String[] osaIgnoreScopes, String dummyFilename) {
+    public static Properties generateOSAScanConfiguration(String scanFolder, String[] osaIgnoreScopes, String dummyFilename) {
 
-        FSAConfigProperties ret = new FSAConfigProperties();
+        Properties ret = new Properties();
 
         ret.put("includes", dummyFilename);
 
