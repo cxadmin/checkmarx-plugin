@@ -10,9 +10,9 @@
     <description>Enables a maven project to integrate with Checkmarx SAST scan.</description>
     <url>https://www.checkmarx.com</url>
     <scm>
-        <connection>scm:git:git://github.com/cxadmin/checkmarx-plugin.git</connection>
-        <developerConnection>scm:git:ssh://github.com/cxadmin/checkmarx-plugin.git</developerConnection>
-        <url>http://github.com/cxadmin/checkmarx-plugin/tree/master</url>
+        <connection>scm:git:git://github.com/checkmarx-ltd/checkmarx-plugin.git</connection>
+        <developerConnection>scm:git:ssh://github.com/checkmarx-ltd/checkmarx-plugin.git</developerConnection>
+        <url>http://github.com/checkmarx-ltd/checkmarx-plugin/tree/master</url>
     </scm>
     <licenses>
         <license>
@@ -27,6 +27,11 @@
         <slf4j.version>1.7.5</slf4j.version>
         <cxf.version>2.2.3</cxf.version>
         <common.client.version>2020.1.6.NO.SCA</common.client.version>
+
+        <sonar.projectKey>checkmarx-ltd_checkmarx-plugin</sonar.projectKey>
+        <sonar.organization>checkmarx-ltd</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.login>a4dd13b335953c2e06d98f2d438abd8523eb5c5a</sonar.login>
     </properties>
 
     <dependencies>
